@@ -184,7 +184,7 @@ AI Overlay Behavioral Detection System
     ├── Model Retraining
     └── Model Version Deployment
 
-    
+
 A more production-oriented design can be:
 
 Browser Test Page
@@ -1977,3 +1977,101 @@ The initial recommended path is therefore:
 10. Deploy the model behind a backend API.
 11. Combine real-time risk with post-test sequence analysis.
 12. Continuously retrain and evaluate against new AI-assisted behaviors.
+
+
+
+final schema for behavioral temporal 
+
+BehavioralSequence
+│
+├── sessionId
+├── questionId
+├── questionType
+├── questionOpenTimestamp
+│
+├── events[]
+│   │
+│   ├── timestamp
+│   ├── timeSincePreviousEvent
+│   ├── eventType
+│   │
+│   ├── Keyboard
+│   │   ├── keydown
+│   │   ├── keyup
+│   │   ├── key
+│   │   └── modifier state
+│   │
+│   ├── Mouse
+│   │   ├── click
+│   │   ├── movement
+│   │   └── hover
+│   │
+│   ├── Focus
+│   │   ├── focus
+│   │   ├── blur
+│   │   └── visibility
+│   │
+│   ├── Clipboard
+│   │   ├── copy
+│   │   ├── paste
+│   │   └── cut
+│   │
+│   └── Answer
+│       └── answerChange
+│
+├── questionMetrics
+│   ├── timeSpent
+│   ├── idleTime
+│   ├── focusCount
+│   ├── blurCount
+│   ├── mouseActionCount
+│   ├── typingSpeed
+│   ├── answerLengthIncrement
+│   ├── pasteCount
+│   ├── copyCount
+│   └── cutCount
+│
+└── navigation
+    ├── next
+    ├── previous
+    └── revisit
+
+
+
+
+
+    events after normalization or events received to model 
+    {
+  "questionId": "Q42",
+  "questionType": "MCQ",
+  "events": [
+    {
+      "timestamp": 1724500008200,
+      "eventType": "KEY_DOWN",
+      "eventData": {
+        "key": "META"
+      }
+    },
+    {
+      "timestamp": 1724500008300,
+      "eventType": "KEY_DOWN",
+      "eventData": {
+        "key": "BACKSLASH"
+      }
+    },
+    {
+      "timestamp": 1724500008400,
+      "eventType": "KEY_UP",
+      "eventData": {
+        "key": "BACKSLASH"
+      }
+    },
+    {
+      "timestamp": 1724500008500,
+      "eventType": "KEY_UP",
+      "eventData": {
+        "key": "META"
+      }
+    }
+  ]
+}
