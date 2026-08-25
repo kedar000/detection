@@ -1,0 +1,163 @@
+AI Overlay Architecture
+│
+├── 1. How is the overlay created?
+│      ├── Browser DOM
+│      ├── Electron window
+│      └── Native OS window
+│
+├── 2. How does it stay on top?
+│      └── always-on-top / window z-order
+│
+├── 3. How does it avoid focus changes?
+│      ├── non-activating window
+│      ├── global hotkeys
+│      └── click-through behavior
+│
+├── 4. How does it avoid screenshots?
+│      ├── capture exclusion
+│      ├── content protection
+│      └── platform-specific APIs
+│
+├── 5. How does it obtain test/question content?
+│      ├── screen capture
+│      ├── OCR
+│      ├── accessibility APIs
+│      └── audio/transcription
+│
+├── 6. How does it communicate with AI?
+│      └── local app → backend → LLM
+│
+└── 7. How does it render the answer?
+       └── native overlay
+
+
+
+Browser DOM 
+Operating System
+│
+├── Chrome
+│    └── Your Test webpage
+│
+└── AI Application
+     └── Overlay Window
+
+The important part is that both Chrome and the AI application are separate top-level windows managed by the OS.
+Windows maintains a z-order for these windows. A topmost window can remain above normal windows even when it isn’t the active/foreground window.  
+
+explore this possible flows used to disable an application from capture flow 
+                         AI Overlay
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+          ▼                  ▼                  ▼
+ WDA_EXCLUDEFROMCAPTURE   Capture-side       Rendering /
+                          exclusion           composition
+          │                  │                  │
+          ▼                  ▼                  ▼
+ Window tells OS         Capture tells OS    Different surface/
+ "don't capture me"     "don't capture it"   composition behavior
+
+
+ AI overlay
+    ↓
+Not actually part of the desktop surface
+    ↓
+Separate rendering path
+    ↓
+Visible to human
+    ↓
+Absent from particular capture path
+
+
+the complete layer model
+┌─────────────────────────────────────────────┐
+│ Layer 1 — Application / Overlay             │
+│                                             │
+│ AI overlay app                              │
+│ Chrome                                      │
+│ Discord / VS Code / etc.                    │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────┐
+│ Layer 2 — Window Manager / HWND             │
+│                                             │
+│ HWND                                        │
+│ window styles                               │
+│ window visibility                           │
+│ display affinity                            │
+│ z-order                                     │
+│ process ↔ window relationship               │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────┐
+│ Layer 3 — DWM / Desktop Composition         │
+│                                             │
+│ Desktop surfaces                            │
+│ Window composition                          │
+│ Z-order composition                         │
+│ Monitor output                              │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────┐
+│ Layer 4 — Windows Capture Infrastructure    │
+│                                             │
+│ Windows Graphics Capture (WGC)              │
+│ Capture session                             │
+│ Capture target                              │
+│ Capture exclusion                           │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────┐
+│ Layer 5 — Browser Capture Implementation    │
+│                                             │
+│ Chrome                                      │
+│ getDisplayMedia()                           │
+│ Chrome's capture selection / processing     │
+└──────────────────────┬──────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────┐
+│ Layer 6 — Captured MediaStream              │
+│                                             │
+│ Video frames                                │
+│ MediaStreamTrack                            │
+│ Canvas / WebRTC / upload                    │
+└─────────────────────────────────────────────┘
+
+
+
+
+
+Operating System Kernel
+        │
+Window Manager / Desktop Compositor        (DWM on Windows, WindowServer on macOS,
+        │                                   a Wayland/X11 compositor on Linux)
+        │   • Owns the full window stack (z-order, bounds, PIDs, titles) for
+        │     every application on the machine.
+        │   • Produces the final composited framebuffer sent to the display.
+        │   • Also produces whatever buffer is handed to "capture" consumers
+        │     (screen recorders, video-call apps, getDisplayMedia backends) —
+        │     and can selectively omit specific windows from that second
+        │     buffer on a per-window, per-app basis (see Section 4).
+        ▼
+Browser Process (privileged, native code)
+        │   • Owns HWNDs/NSWindows for its OWN top-level windows only.
+        │   • Can query its own window's OS-level state (focused? minimized?
+        │     fullscreen?) but has no standard, supported way to enumerate
+        │     *other* applications' windows.
+        ▼  ── sandbox / IPC boundary ──
+Renderer Process (sandboxed, one per site/tab)
+        │   • Deliberately has NO direct OS API access. This is not an
+        │     oversight — the renderer sandbox exists specifically so that
+        │     a malicious or compromised webpage cannot touch the OS,
+        │     the filesystem, or other processes.
+        ▼
+Layout / Rendering Engine (Blink, Gecko, WebKit) → DOM
+        ▼
+JavaScript execution environment
+        ▼
+Web-exposed APIs — a deliberately narrow, curated surface

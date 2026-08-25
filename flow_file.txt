@@ -1,0 +1,56 @@
+ screen capture flow
+                    OS
+                     │
+            ┌────────┴─────────┐
+            │                  │
+        Window manager     Capture subsystem
+            │                  │
+            │                  ↓
+            │              Screen frame
+            │                  │
+            │                  ↓
+            │              Chrome
+            │                  │
+            │                  ↓
+            │             MediaStream
+            │                  │
+            │                  ↓
+            │                video
+            │                  │
+            │                  ↓
+            │                canvas
+            │                  │
+            │                  ↓
+            │              JPEG image
+            │
+            ↓
+       Window focus
+            │
+            ↓
+       Chrome blur/focus
+
+Notice that the screenshot doesn’t come from the DOM.
+It comes from a lower-level OS/window-compositor capture mechanism.
+
+when our test does navigator.mediaDevices.getDisplayMedia() the browser asks the OS screen/window capture subsystem for a video stream.
+
+Windows
+
+Windows provides exactly this mechanism through:
+SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
+
+With WDA_EXCLUDEFROMCAPTURE, Windows can:
+* Display the window normally on the physical monitor
+* Exclude that window’s pixels from supported screen-capture/screenshot APIs
+
+
+
+“Cluely is visible to the user but absent from our browser screen capture”
+is evidence that the rendered desktop and the capture source are not necessarily the same pixel stream.
+Possible implementations include:
+
+1. Native transparent/always-on-top window + capture exclusion
+2. Native overlay rendered through an OS compositor surface
+3. Capture-source-specific exclusion/filtering
+4. Browser/OS-specific protected-content mechanisms
+5. A combination of the above

@@ -1,0 +1,6 @@
+Problem Statement
+Online testing platforms need to detect when a candidate is using external AI assistance through desktop overlays during a test.
+The main challenge is that these AI overlays may appear above the test webpage without becoming part of the webpage DOM, and the overlay itself may not be visible in periodic screenshots captured by the testing system. Therefore, traditional screenshot-based or DOM-based detection cannot reliably identify their usage.
+The goal is to develop a behavioral sequence-based detection system that collects browser-observable interaction signals such as focus/blur events, keyboard and mouse activity, typing patterns, paste actions, answer changes, and timing information.
+These behavioral signals will be sent to a backend AI detection API, where a machine-learning model will analyze the sequence of events and determine whether the candidate’s behavior is normal or suspicious.
+The system should produce a risk/confidence score for potential AI-overlay usage, while minimizing false positives caused by legitimate candidate behavior.

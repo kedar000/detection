@@ -1,0 +1,1979 @@
+Behavioral Sequence Model for AI Overlay Detection
+
+1. Objective
+
+The objective is to detect possible use of external AI overlays during
+an online test when the overlay itself is not visible in the webpage
+screenshot.
+
+The model will not attempt to visually identify the overlay. Instead, it
+will learn behavioral patterns that may occur when a candidate interacts
+with the test while an external AI assistant is active.
+
+The system should output a risk score rather than make an absolute
+claim:
+
+-   Normal behavior
+-   Suspicious behavior
+-   High-risk behavior
+
+The key principle is:
+
+  The model detects behavioral anomalies and patterns associated with
+  AI-assisted interaction, not the AI overlay itself.
+
+If an overlay produces no observable side effects in the browser or
+candidate behavior, it cannot be reliably detected by this approach.
+
+------------------------------------------------------------------------
+
+2. High-Level Architecture
+
+The proposed pipeline is:
+
+Browser Test Page
+        │
+        ▼
+Event Collector
+        │
+        ▼
+Event Normalization
+        │
+        ▼
+Session / Time-Window Aggregation
+        │
+        ▼
+Feature Extraction
+        │
+        ▼
+Behavioral Sequence Model
+        │
+        ▼
+AI-Assistance Risk Score
+        │
+        ▼
+Backend Detection API
+        │
+        ├──► Proctor Dashboard
+        │
+        ├──► Session Risk History
+        │
+        └──► Investigation / Review
+
+
+extra: 
+AI Overlay Behavioral Detection System
+│
+├── 1. Browser / Test Page
+│   │
+│   └── Event Collector
+│       ├── Focus / Blur Events
+│       ├── Visibility Events
+│       ├── Keyboard Events
+│       ├── Mouse / Pointer Events
+│       ├── Clipboard Events
+│       ├── Input / Answer Events
+│       ├── Question Navigation Events
+│       └── Timing Events
+│
+├── 2. Event Processing
+│   │
+│   ├── Event Normalization
+│   │   ├── Normalize Event Types
+│   │   ├── Normalize Timestamps
+│   │   ├── Validate Event Metadata
+│   │   └── Remove / Ignore Invalid Events
+│   │
+│   └── Session / Time-Window Aggregation
+│       ├── Short Window (5–10 sec)
+│       ├── Medium Window (30–60 sec)
+│       ├── Question-Level Window
+│       └── Full Session Window
+│
+├── 3. Feature Extraction
+│   │
+│   ├── Focus Features
+│   ├── Typing Features
+│   ├── Clipboard Features
+│   ├── Mouse Features
+│   ├── Answer Modification Features
+│   ├── Question-Level Features
+│   ├── Timing Features
+│   └── Candidate Baseline / Deviation Features
+│
+├── 4. Behavioral Sequence Model
+│   │
+│   ├── XGBoost / LightGBM
+│   │   ├── Initial Model
+│   │   └── Tabular Behavioral Features
+│   │
+│   ├── LSTM / GRU
+│   │   └── Temporal Event Sequences
+│   │
+│   └── Transformer
+│       └── Advanced Temporal Sequence Analysis
+│
+├── 5. Backend Detection API
+│   │
+│   ├── Authentication / Session Validation
+│   ├── Event Ingestion
+│   ├── Event Validation
+│   ├── Event Normalization
+│   ├── Feature Processing
+│   ├── ML Model Inference
+│   ├── Risk Aggregation
+│   ├── Risk State Management
+│   └── Model Version Management
+│
+├── 6. AI-Assistance Risk Engine
+│   │
+│   ├── Real-Time Risk Score
+│   ├── Short-Term Risk
+│   ├── Medium-Term Risk
+│   ├── Session-Level Risk
+│   ├── Risk Smoothing
+│   ├── Risk Thresholds
+│   └── Risk Classification
+│       ├── Normal
+│       ├── Monitoring
+│       ├── Suspicious
+│       └── High Risk
+│
+├── 7. Data / Storage Layer
+│   │
+│   ├── Behavioral Events
+│   ├── Extracted Features
+│   ├── Session State
+│   ├── Risk Predictions
+│   ├── Risk History
+│   ├── Model Versions
+│   └── Investigation Data
+│
+├── 8. Real-Time Monitoring
+│   │
+│   ├── Current Risk Score
+│   ├── Risk Trend
+│   ├── Behavioral Signals
+│   └── Telemetry Health
+│
+├── 9. Proctor Dashboard
+│   │
+│   ├── Candidate Risk Score
+│   ├── Risk Level
+│   ├── Risk Trend
+│   ├── Behavioral Signals
+│   ├── Question-Level Risk
+│   └── Session Timeline
+│
+├── 10. Post-Test Analysis
+│   │
+│   ├── Complete Session Replay
+│   ├── Full Sequence Analysis
+│   ├── Deep Behavioral Model
+│   ├── Final Risk Score
+│   └── Investigation Report
+│
+└── 11. Monitoring / Model Management
+    │
+    ├── API Monitoring
+    ├── Model Performance
+    ├── False Positive Monitoring
+    ├── False Negative Monitoring
+    ├── Data Drift Detection
+    ├── Model Drift Detection
+    ├── Model Retraining
+    └── Model Version Deployment
+
+    
+A more production-oriented design can be:
+
+Browser Test Page
+        │
+        │ Behavioral Telemetry
+        ▼
+Backend Detection API
+        │
+        ├──► Event Validation
+        │
+        ├──► Feature Extraction
+        │
+        ├──► Behavioral Sequence Model
+        │
+        └──► Risk Aggregation
+                  │
+                  ▼
+             Risk Score
+                  │
+                  ├──► Real-Time Monitoring
+                  │
+                  ├──► Post-Test Analysis
+                  │
+                  └──► Proctor Alerts
+
+------------------------------------------------------------------------
+
+3. What We Need
+
+The system requires five major components.
+
+3.1 Browser Event Collector
+
+The test webpage needs a lightweight telemetry layer that records
+browser-observable events.
+
+Potential events include:
+
+Focus-related
+
+-   window focus
+-   window blur
+-   document visibility changes
+-   page visibility state
+-   fullscreen changes
+
+These are already useful because the current system uses focus/blur.
+
+However, they should not be treated as proof of AI usage.
+
+A blur can occur because of:
+
+-   another browser tab
+-   operating-system interaction
+-   notification
+-   another window
+-   browser behavior
+-   user accidentally clicking outside the test
+-   external overlay behavior
+
+Therefore focus/blur should become model features rather than direct
+decisions.
+
+Keyboard events
+
+Potentially collect:
+
+-   keydown
+-   keyup
+-   number of keys pressed
+-   typing duration
+-   time between keystrokes
+-   typing bursts
+-   backspace frequency
+-   delete frequency
+-   modifier-key usage
+
+Do not store actual sensitive text unless there is a specific legitimate
+requirement. Prefer metadata such as timing and counts.
+
+Mouse / pointer events
+
+Potential signals:
+
+-   mouse movement
+-   movement frequency
+-   click count
+-   click intervals
+-   pointer inactivity
+-   pointer movement before answer changes
+
+Again, the objective is behavioral analysis rather than recording
+unnecessary user content.
+
+Clipboard-related events
+
+Potential signals:
+
+-   copy
+-   paste
+-   cut
+-   paste frequency
+-   paste timing relative to answer changes
+
+Paste is potentially useful but should never be treated as proof of AI
+usage.
+
+Candidates can legitimately paste:
+
+-   code
+-   prepared answers
+-   mathematical expressions
+-   copied test content
+-   allowed information
+
+Input behavior
+
+For text-answer questions:
+
+-   input event frequency
+-   number of characters added
+-   number of characters removed
+-   answer length
+-   answer growth rate
+-   answer modification rate
+-   time from question opening to first input
+-   time from first input to submission
+
+Question-level events
+
+Capture:
+
+-   question opened
+-   question viewed
+-   question changed
+-   question answered
+-   question submitted
+-   time spent per question
+-   answer length
+-   answer modification count
+-   time between question changes
+
+Screen capture metadata
+
+The actual screenshot can remain part of the existing system.
+
+The behavioral model does not necessarily need the image.
+
+Useful metadata includes:
+
+-   screenshot timestamp
+-   screenshot interval
+-   capture success/failure
+-   relationship between screenshot timestamps and user events
+
+------------------------------------------------------------------------
+
+4. Event Schema
+
+Every event should have a normalized structure.
+
+Example:
+
+{ “sessionId”: “session-123”, “questionId”: “q-42”, “timestamp”:
+1724500000000, “eventType”: “blur”, “metadata”: {} }
+
+Keyboard example:
+
+{ “sessionId”: “session-123”, “questionId”: “q-42”, “timestamp”:
+1724500001200, “eventType”: “keydown”, “metadata”: { “keyCategory”:
+“character” } }
+
+Paste example:
+
+{ “sessionId”: “session-123”, “questionId”: “q-42”, “timestamp”:
+1724500003000, “eventType”: “paste”, “metadata”: { “inputLengthBefore”:
+120, “inputLengthAfter”: 580 } }
+
+The metadata should be carefully minimized to avoid collecting
+unnecessary personal or sensitive information.
+
+------------------------------------------------------------------------
+
+5. Event Normalization
+
+Raw browser events are noisy.
+
+For example:
+
+keydown keydown keydown keyup keyup mousemove mousemove mousemove
+mousemove
+
+should not necessarily be sent individually to the model.
+
+The event collector can aggregate them into meaningful behavioral
+measurements.
+
+For example:
+
+{ “typingDuration”: 4.2, “keystrokes”: 18, “averageInterKeyDelay”: 0.23,
+“backspaces”: 2, “mouseMovement”: “low” }
+
+This reduces:
+
+-   network traffic
+-   storage
+-   processing cost
+-   model input size
+
+and produces more stable features.
+
+------------------------------------------------------------------------
+
+6. Windowing Strategy
+
+A sequence model needs temporal context.
+
+Instead of evaluating one event independently, divide the test into time
+windows.
+
+Possible windows:
+
+-   5 seconds
+-   10 seconds
+-   30 seconds
+-   60 seconds
+-   question-level windows
+
+A good initial strategy is:
+
+Short window
+
+5–10 seconds
+
+Used for detecting immediate behavioral changes.
+
+Medium window
+
+30–60 seconds
+
+Used for detecting interaction patterns.
+
+Question window
+
+From question open to question submission.
+
+Used for understanding question-specific behavior.
+
+Session window
+
+Entire test.
+
+Used for long-term behavioral baseline.
+
+The system can maintain several levels simultaneously.
+
+------------------------------------------------------------------------
+
+7. Feature Categories
+
+Features should be divided into logical groups.
+
+7.1 Focus Features
+
+Examples:
+
+-   blur count
+-   focus count
+-   blur duration
+-   average blur duration
+-   maximum blur duration
+-   time between blur and answer modification
+-   number of visibility changes
+
+Example:
+
+blur -> 2.1 seconds -> focus -> answer changes
+
+can become a temporal feature.
+
+------------------------------------------------------------------------
+
+8. Typing Features
+
+Potential features:
+
+-   characters typed per second
+-   average inter-key delay
+-   median inter-key delay
+-   standard deviation of inter-key delay
+-   typing burst length
+-   number of typing bursts
+-   pause frequency
+-   longest pause
+-   backspace ratio
+-   deletion ratio
+-   typing acceleration
+-   typing deceleration
+
+Example:
+
+Normal typing:
+
+3.1 3.7 3.4 3.8 3.2 chars/sec
+
+Suspicious sudden behavior:
+
+0 0 0 0 450 characters inserted
+
+The second pattern may be suspicious, but the model must learn that it
+is not automatically AI usage.
+
+------------------------------------------------------------------------
+
+9. Answer Change Features
+
+For every answer:
+
+-   initial answer length
+-   final answer length
+-   number of modifications
+-   maximum single modification size
+-   average modification size
+-   answer growth rate
+-   deletion percentage
+-   insertion percentage
+-   time between modifications
+
+A useful feature could be:
+
+answer_jump_ratio = characters_added / previous_answer_length
+
+For example:
+
+previous answer = 50 characters new answer = 500 characters
+
+This is a large behavioral transition.
+
+------------------------------------------------------------------------
+
+10. Paste Features
+
+Potential features:
+
+-   paste count
+-   paste frequency
+-   characters inserted through paste
+-   paste-to-typing ratio
+-   time from paste to submission
+-   time from blur/focus to paste
+-   time from paste to large answer change
+
+Important:
+
+A paste event alone should have low predictive weight.
+
+The model should look at combinations.
+
+For example:
+
+blur -> 5 seconds -> focus -> paste 600 characters -> submit
+
+is more informative than:
+
+paste 600 characters
+
+by itself.
+
+------------------------------------------------------------------------
+
+11. Mouse Features
+
+Potential features:
+
+-   movement distance
+-   movement frequency
+-   click frequency
+-   average click interval
+-   idle duration
+-   mouse movement while typing
+-   mouse inactivity around answer changes
+
+These features can help establish whether the candidate is actively
+interacting with the page.
+
+They should generally have lower importance because mouse behavior
+varies greatly between candidates.
+
+------------------------------------------------------------------------
+
+12. Question-Level Features
+
+For every question:
+
+-   time spent
+-   time to first interaction
+-   time to first answer
+-   number of answer modifications
+-   typing duration
+-   paste count
+-   blur count
+-   focus count
+-   final answer length
+-   answer growth pattern
+-   question difficulty if available
+
+Question context is important.
+
+A 500-character answer appearing instantly on an essay question may be
+different from a 500-character code block pasted into a coding question.
+
+------------------------------------------------------------------------
+
+13. Candidate Baseline
+
+One of the most important improvements is establishing a baseline.
+
+Candidates naturally have different interaction styles.
+
+Candidate A:
+
+-   fast typist
+-   frequent corrections
+-   little mouse movement
+
+Candidate B:
+
+-   slow typist
+-   frequent pauses
+-   large use of keyboard shortcuts
+
+A global threshold can produce false positives.
+
+Therefore the model should learn candidate-specific behavior where
+possible.
+
+During an initial period:
+
+Baseline collection | v Normal typing pattern Normal pause pattern
+Normal answer changes Normal navigation | v Candidate baseline
+
+Later:
+
+Current behavior | v Compare against baseline | v Deviation score
+
+This should not automatically label a candidate as suspicious. It should
+become another model feature.
+
+------------------------------------------------------------------------
+
+14. Behavioral Sequence Representation
+
+The model should not only receive aggregated numbers.
+
+Temporal relationships are important.
+
+Example sequence:
+
+QUESTION_OPEN | v READING | v IDLE | v BLUR | v FOCUS | v PASTE | v
+ANSWER_CHANGE | v SUBMIT
+
+The model should learn relationships between events.
+
+An event embedding can represent:
+
+event type + time since previous event + duration + event metadata
+
+For example:
+
+Event = PASTE
+
+Features:
+
+time since previous event = 2.3 sec characters inserted = 450 question
+time = 38 sec previous event = FOCUS
+
+------------------------------------------------------------------------
+
+15. Sequence Model Options
+
+There are several models we can evaluate.
+
+15.1 XGBoost / LightGBM
+
+Recommended first implementation.
+
+Input:
+
+Aggregated behavioral features.
+
+Output:
+
+Probability of suspicious behavior.
+
+Advantages:
+
+-   easy to train
+-   fast inference
+-   works well on tabular data
+-   explainable using feature importance
+-   works with relatively small datasets
+-   easier to deploy
+
+Disadvantage:
+
+It does not naturally understand long event sequences.
+
+------------------------------------------------------------------------
+
+16. LSTM / GRU
+
+Input:
+
+A sequence of behavioral vectors.
+
+Example:
+
+t1 -> typing t2 -> typing t3 -> idle t4 -> blur t5 -> focus t6 -> paste
+t7 -> answer change
+
+The LSTM learns temporal dependencies.
+
+Advantages:
+
+-   understands sequences
+-   works with moderate datasets
+-   relatively straightforward
+
+Disadvantages:
+
+-   harder to train
+-   less parallelizable than transformers
+-   long sequences can be difficult
+
+------------------------------------------------------------------------
+
+17. Transformer Encoder
+
+For a larger dataset, a Transformer is a strong candidate.
+
+Architecture:
+
+Event sequence | v Event embedding | v Positional / temporal information
+| v Transformer Encoder | v Sequence representation | v Classification
+head | v Risk score
+
+The model can learn relationships such as:
+
+blur -> focus -> paste -> answer jump
+
+rather than treating each event independently.
+
+------------------------------------------------------------------------
+
+18. Recommended Model Development Path
+
+Do not start directly with a Transformer.
+
+Use:
+
+Phase 1:
+
+XGBoost
+
+Phase 2:
+
+LSTM/GRU
+
+Phase 3:
+
+Transformer
+
+Compare them on the same validation dataset.
+
+The final choice should be based on:
+
+-   precision
+-   recall
+-   false positive rate
+-   false negative rate
+-   latency
+-   model size
+-   inference cost
+-   interpretability
+
+------------------------------------------------------------------------
+
+19. Labelled Dataset
+
+The biggest requirement is training data.
+
+We need sessions with known labels.
+
+Example:
+
+NORMAL
+
+Candidate completes test normally.
+
+AI_ASSISTED
+
+Candidate uses an external AI tool/overlay during the test.
+
+OTHER_SUSPICIOUS
+
+Candidate displays unusual behavior for another reason.
+
+The third category is important because otherwise the model may learn:
+
+unusual behavior = AI
+
+which will create false positives.
+
+------------------------------------------------------------------------
+
+20. Data Collection Experiment
+
+Build controlled experiments.
+
+Group A:
+
+Normal candidates.
+
+Group B:
+
+Candidates using AI assistance.
+
+Group C:
+
+Candidates performing unusual but legitimate behaviors.
+
+Examples for Group C:
+
+-   paste prepared code
+-   pause for a long time
+-   switch applications if the test permits it
+-   use keyboard shortcuts
+-   type very quickly
+-   use external notes if permitted
+-   change answers repeatedly
+
+This teaches the model the difference between AI behavior and
+normal-but-unusual behavior.
+
+------------------------------------------------------------------------
+
+21. Multiple AI Tools
+
+The training dataset should ideally include multiple categories of
+assistance.
+
+Do not train only against one specific product.
+
+The model should learn behavioral characteristics rather than product
+signatures.
+
+Possible categories:
+
+-   AI desktop overlay
+-   browser-based AI assistant
+-   copied AI answer
+-   generated code pasted into editor
+-   AI-assisted text generation
+-   external AI window
+
+The model should avoid depending on:
+
+“Cluely behavior”
+
+and instead learn:
+
+“AI-assisted interaction patterns.”
+
+------------------------------------------------------------------------
+
+22. Data Splitting
+
+Do not randomly split individual events.
+
+This can cause data leakage.
+
+Suppose one candidate generates:
+
+Session A Session B Session C
+
+All three should not be distributed across training and test sets.
+
+Instead:
+
+Candidate-level split:
+
+Training candidates Validation candidates Test candidates
+
+This tests whether the model generalizes to unseen candidates.
+
+------------------------------------------------------------------------
+
+23. Class Imbalance
+
+Real-world AI-assisted sessions may be much less common than normal
+sessions.
+
+Example:
+
+95% normal 5% suspicious
+
+A naive model could achieve:
+
+95% accuracy
+
+by predicting “normal” every time.
+
+Therefore accuracy is not enough.
+
+Use:
+
+-   precision
+-   recall
+-   F1
+-   ROC-AUC
+-   PR-AUC
+-   false-positive rate
+-   false-negative rate
+-   confusion matrix
+
+For proctoring, precision and false-positive rate are especially
+important.
+
+------------------------------------------------------------------------
+
+24. False Positive Problem
+
+Potential legitimate behavior:
+
+Candidate:
+
+blur -> focus -> paste -> answer changes
+
+This could happen because the candidate copied a permitted piece of
+code.
+
+The model must therefore combine multiple signals.
+
+Do not implement:
+
+if paste: suspicious
+
+Instead:
+
+risk = f( paste, blur, timing, typing_pattern, answer_change,
+question_context, candidate_baseline, historical_behavior )
+
+------------------------------------------------------------------------
+
+25. False Negative Problem
+
+A sophisticated AI user may deliberately behave naturally.
+
+For example:
+
+-   type answers manually
+-   avoid paste
+-   maintain normal timing
+-   use an overlay without triggering blur
+-   generate short answers incrementally
+
+The model may fail to detect this.
+
+Therefore behavioral detection should be considered a probabilistic
+signal, not a guaranteed detector.
+
+------------------------------------------------------------------------
+
+26. Risk Scoring
+
+Instead of binary classification:
+
+AI = true / false
+
+use:
+
+risk_score = 0.0 to 1.0
+
+Example:
+
+0.08 -> normal 0.31 -> low concern 0.57 -> suspicious 0.81 -> high risk
+0.94 -> very high risk
+
+The exact thresholds must be determined experimentally using validation
+data.
+
+------------------------------------------------------------------------
+
+27. Temporal Risk Aggregation
+
+Do not alert because of one suspicious event.
+
+Maintain a rolling risk score.
+
+Example:
+
+t1 = 0.10 t2 = 0.12 t3 = 0.18 t4 = 0.72 t5 = 0.78 t6 = 0.84 t7 = 0.88
+
+A persistent increase is more meaningful than:
+
+0.10 0.95 0.10 0.05
+
+This can be implemented with:
+
+-   exponential moving average
+-   rolling average
+-   temporal smoothing
+-   hidden Markov model
+-   state machine
+
+A simple first version can use an exponential moving average.
+
+------------------------------------------------------------------------
+
+28. Multi-Window Risk
+
+Maintain:
+
+Short-term risk Medium-term risk Session risk
+
+For example:
+
+shortRisk = recent 10 seconds
+
+mediumRisk = recent 60 seconds
+
+sessionRisk = entire test
+
+Final:
+
+finalRisk = w1 * shortRisk + w2 * mediumRisk + w3 * sessionRisk
+
+The weights should be learned or calibrated using validation data.
+
+------------------------------------------------------------------------
+
+29. Backend API Design
+
+The browser should send batches rather than one API request per event.
+
+Example:
+
+POST /api/v1/behavior/events
+
+Request:
+
+{ “sessionId”: “abc”, “sequenceNumber”: 12, “events”: [ { “type”:
+“blur”, “timestamp”: 12345 }, { “type”: “focus”, “timestamp”: 12500 }, {
+“type”: “paste”, “timestamp”: 12700 } ] }
+
+Backend response:
+
+{ “sessionId”: “abc”, “riskScore”: 0.72, “riskLevel”: “suspicious” }
+
+The frontend does not need to know exactly why the score was generated.
+
+------------------------------------------------------------------------
+
+30. Event Batching
+
+Sending every event individually would be inefficient.
+
+Bad:
+
+POST /event POST /event POST /event POST /event POST /event
+
+Better:
+
+POST /events
+
+with a batch.
+
+Possible batching strategies:
+
+-   every 5 seconds
+-   every 10 seconds
+-   after N events
+-   immediately for critical lifecycle events
+
+The exact interval should be tested.
+
+------------------------------------------------------------------------
+
+31. Reliability
+
+Network connectivity may fail.
+
+The browser should temporarily buffer telemetry.
+
+Example:
+
+Local queue | +–> network available -> send | +–> network unavailable ->
+store temporarily | v retry later
+
+Events should have sequence numbers.
+
+Example:
+
+batch 101 batch 102 batch 103
+
+The backend can detect missing batches.
+
+------------------------------------------------------------------------
+
+32. Security
+
+The client cannot be fully trusted.
+
+A candidate can potentially:
+
+-   modify JavaScript
+-   disable event collection
+-   fake events
+-   alter timestamps
+-   block API requests
+-   inspect the model
+-   manipulate browser APIs
+
+Therefore the backend should:
+
+-   validate event schemas
+-   validate timestamps
+-   reject impossible sequences
+-   detect duplicate events
+-   detect missing sequence numbers
+-   authenticate sessions
+-   rate-limit APIs
+-   record telemetry integrity information
+
+The behavioral model should not be treated as cryptographically
+trustworthy evidence.
+
+------------------------------------------------------------------------
+
+33. Timestamp Problems
+
+Browser timestamps may be manipulated or affected by:
+
+-   system clock changes
+-   browser throttling
+-   background tabs
+-   CPU load
+-   network delays
+
+Prefer monotonic timing where possible for intervals.
+
+For example, use:
+
+performance.now()
+
+for client-side duration measurements.
+
+Use server timestamps for received batches.
+
+Do not assume client timestamps are authoritative.
+
+------------------------------------------------------------------------
+
+34. Browser Compatibility
+
+The solution must work across browsers.
+
+Potential differences exist in:
+
+-   focus behavior
+-   visibility events
+-   keyboard events
+-   clipboard behavior
+-   browser throttling
+-   fullscreen behavior
+
+Therefore event collection should have a browser compatibility layer.
+
+The model should not depend heavily on one browser-specific event.
+
+------------------------------------------------------------------------
+
+35. Existing Focus/Blur System
+
+The current focus/blur mechanism should not be removed.
+
+Instead, integrate it as one feature family.
+
+Current:
+
+blur -> candidate away
+
+New:
+
+blur -> behavioral signal
+
+For example:
+
+blur_count blur_duration blur_frequency blur_to_answer_change_time
+blur_to_paste_time blur_to_focus_time
+
+This converts the existing deterministic system into model input.
+
+------------------------------------------------------------------------
+
+36. Screen Capture Integration
+
+The existing screenshot system can continue independently.
+
+The screenshot does not need to contain the overlay.
+
+Its purpose can remain:
+
+-   proctoring evidence
+-   candidate monitoring
+-   webpage state
+-   answer context
+
+Behavioral detection provides a second signal.
+
+Architecture:
+
+Screenshot system | +—-> Proctor evidence
+
+Behavior system | +—-> AI risk score
+
+This separation is useful.
+
+------------------------------------------------------------------------
+
+37. Model Explainability
+
+A proctor should not receive only:
+
+AI Risk = 0.89
+
+Instead provide supporting signals.
+
+Example:
+
+Risk: 0.89
+
+Contributing signals:
+
+-   unusual answer insertion pattern
+-   repeated focus transitions
+-   large answer change after idle period
+-   typing pattern significantly different from baseline
+
+The explanations should be phrased as behavioral observations, not
+accusations.
+
+Example:
+
+Bad:
+
+“Candidate used AI.”
+
+Better:
+
+“Behavioral pattern is highly inconsistent with the candidate’s normal
+interaction pattern.”
+
+------------------------------------------------------------------------
+
+38. Feature Importance
+
+For XGBoost/LightGBM, use:
+
+-   SHAP
+-   feature importance
+-   permutation importance
+
+This helps answer:
+
+Why did the model produce 0.87?
+
+Example:
+
+paste_after_focus +0.17
+
+large_answer_jump +0.14
+
+typing_pause +0.09
+
+blur_frequency +0.06
+
+This is valuable for debugging and proctor review.
+
+------------------------------------------------------------------------
+
+39. Model Training Pipeline
+
+Recommended pipeline:
+
+Raw telemetry | v Data validation | v Event normalization | v Session
+reconstruction | v Feature engineering | v Label assignment | v Train /
+validation / test split | v Model training | v Evaluation | v Threshold
+calibration | v Model registry | v Production API
+
+------------------------------------------------------------------------
+
+40. Offline Training
+
+Model training should initially happen offline.
+
+Collect data:
+
+sessions | v database/data lake | v training dataset | v Python ML
+pipeline | v trained model
+
+Possible technologies:
+
+-   Python
+-   pandas
+-   NumPy
+-   scikit-learn
+-   XGBoost
+-   LightGBM
+-   PyTorch
+
+For the first model, Python + XGBoost is sufficient.
+
+------------------------------------------------------------------------
+
+41. Model Serving
+
+There are several options.
+
+Option A: Python API
+
+FastAPI
+
+    |
+    v
+
+XGBoost model
+
+This is the simplest architecture.
+
+Option B: ONNX
+
+Train model in Python.
+
+Export to ONNX.
+
+Run using an ONNX runtime.
+
+This can make deployment more portable.
+
+Option C: Separate ML service
+
+Production architecture:
+
+Main backend | v ML service | v Model
+
+This is useful when the main backend is Node.js/Java/etc.
+
+------------------------------------------------------------------------
+
+42. Real-Time Detection
+
+A possible real-time flow:
+
+Candidate starts test.
+
+↓
+
+Browser collects events.
+
+↓
+
+Every 5–10 seconds:
+
+send event batch.
+
+↓
+
+Backend creates latest feature window.
+
+↓
+
+Model generates risk score.
+
+↓
+
+Risk score stored.
+
+↓
+
+If score crosses calibrated threshold for a sustained period:
+
+create proctor signal.
+
+The system should avoid immediate punishment based on one prediction.
+
+------------------------------------------------------------------------
+
+43. Post-Test Detection
+
+Real-time detection is not enough.
+
+After the test:
+
+Full session | v Replay sequence | v Offline model | v Final risk score
+
+The post-test model can use information unavailable during real-time
+detection.
+
+For example:
+
+-   entire test trajectory
+-   candidate baseline
+-   repeated patterns
+-   question-by-question behavior
+-   final answer statistics
+
+This can produce a more accurate final assessment.
+
+------------------------------------------------------------------------
+
+44. Two-Stage Model
+
+A strong production design is:
+
+Stage 1: real-time lightweight model
+
+Purpose:
+
+detect unusual behavior quickly.
+
+Stage 2: offline deep model
+
+Purpose:
+
+perform detailed sequence analysis.
+
+Architecture:
+
+Real-time telemetry | v Lightweight model | v Early risk signal
+
+After test:
+
+Full session | v Deep sequence model | v Final risk assessment
+
+------------------------------------------------------------------------
+
+45. Data Storage
+
+Potential data model:
+
+TestSession | +– Candidate +– Test +– StartTime +– EndTime +– Browser +–
+OS | +– BehavioralEvents | +– timestamp +– eventType +– questionId +–
+metadata
+
+RiskAssessment | +– sessionId +– timestamp +– riskScore +– riskLevel +–
+modelVersion
+
+Store model version with every prediction.
+
+Example:
+
+modelVersion = behavioral-xgb-v1.3
+
+This is essential when models change.
+
+------------------------------------------------------------------------
+
+46. Challenges
+
+Challenge 1: AI is not the only cause of unusual behavior
+
+This is the biggest challenge.
+
+A candidate may legitimately:
+
+-   pause
+-   paste
+-   switch focus
+-   type quickly
+-   modify answers
+-   use keyboard shortcuts
+
+Therefore the model needs contextual combinations.
+
+------------------------------------------------------------------------
+
+47. Challenge 2: Overlay may have zero observable side effects
+
+If an overlay:
+
+-   does not trigger blur
+-   does not affect DOM
+-   does not affect keyboard behavior
+-   does not affect clipboard behavior
+-   does not affect timing
+-   does not appear in screenshots
+
+then there may be no signal to learn from.
+
+This is a fundamental detection boundary.
+
+The model can only detect behavioral side effects.
+
+------------------------------------------------------------------------
+
+48. Challenge 3: Adversarial users
+
+Once candidates understand the detection system, they may intentionally
+mimic normal behavior.
+
+This creates an adversarial ML problem.
+
+The model therefore needs continuous evaluation against new behaviors.
+
+Do not train once and assume the model remains effective permanently.
+
+------------------------------------------------------------------------
+
+49. Challenge 4: Dataset quality
+
+A model is only as good as its training data.
+
+If all AI-assisted examples involve:
+
+blur -> focus -> paste
+
+the model may simply learn:
+
+paste + focus = AI
+
+This will fail in production.
+
+Training data must contain diverse legitimate and AI-assisted behavior.
+
+------------------------------------------------------------------------
+
+50. Challenge 5: Candidate diversity
+
+Different candidates have different:
+
+-   typing speeds
+-   accessibility tools
+-   keyboards
+-   devices
+-   browser configurations
+-   experience levels
+
+The model must generalize across these differences.
+
+Candidate-specific baselines can help.
+
+------------------------------------------------------------------------
+
+51. Challenge 6: Browser differences
+
+The same action may produce different event patterns across browsers.
+
+The dataset should include multiple browser environments.
+
+Browser type should either be:
+
+-   included as controlled metadata
+-   normalized
+-   or used carefully as a model feature
+
+It should not become a shortcut for predicting suspicious behavior.
+
+------------------------------------------------------------------------
+
+52. Challenge 7: Data privacy
+
+Behavioral telemetry can become sensitive.
+
+Therefore:
+
+-   collect only required metadata
+-   avoid storing raw typed content where unnecessary
+-   encrypt data
+-   restrict access
+-   define retention periods
+-   anonymize training datasets where possible
+
+The ML system should primarily need behavioral statistics rather than
+candidate text.
+
+------------------------------------------------------------------------
+
+53. Challenge 8: Concept drift
+
+Candidate behavior changes over time.
+
+AI tools also change.
+
+Browser behavior changes.
+
+Therefore:
+
+Model v1 | v Production | v New behavioral patterns | v Data collection
+| v Model retraining | v Model v2
+
+The model should be continuously evaluated.
+
+------------------------------------------------------------------------
+
+54. Challenge 9: Threshold selection
+
+Suppose:
+
+threshold = 0.70
+
+This may produce many false positives.
+
+Threshold = 0.90
+
+May miss many real cases.
+
+Therefore choose thresholds using validation data and business
+requirements.
+
+Potential policy:
+
+< 0.40 normal
+
+0.40–0.70 monitor
+
+0.70–0.90 proctor review
+
+  0.90 high-priority review
+
+These are examples only. Actual thresholds must come from evaluation.
+
+------------------------------------------------------------------------
+
+55. Challenge 10: Lack of ground truth
+
+In real tests, it is difficult to know whether AI was actually used.
+
+Therefore controlled experiments are required.
+
+For research:
+
+Known normal session Known AI-assisted session
+
+This creates ground truth.
+
+Production data can later be used for additional weakly supervised
+learning, but it should not automatically be treated as perfectly
+labeled.
+
+------------------------------------------------------------------------
+
+56. Evaluation Strategy
+
+The evaluation should answer four questions.
+
+Detection
+
+Can the model distinguish normal and AI-assisted behavior?
+
+False positives
+
+How many legitimate candidates are incorrectly flagged?
+
+Generalization
+
+Does it work for candidates not present in training data?
+
+Robustness
+
+Does it still work when candidates intentionally modify their behavior?
+
+------------------------------------------------------------------------
+
+57. Important Metrics
+
+Primary:
+
+-   Precision
+-   Recall
+-   F1
+-   PR-AUC
+-   False Positive Rate
+
+Secondary:
+
+-   ROC-AUC
+-   detection latency
+-   inference latency
+-   CPU usage
+-   memory usage
+-   API throughput
+
+For a proctoring system, false positives should be treated as a critical
+metric.
+
+------------------------------------------------------------------------
+
+58. Recommended Initial MVP
+
+Do not build the full Transformer immediately.
+
+Build:
+
+Browser telemetry collector | v Event batching | v Backend API | v
+Feature extraction | v XGBoost | v Risk score
+
+Collect:
+
+-   focus/blur
+-   visibility
+-   keyboard timing
+-   paste
+-   answer changes
+-   question timing
+-   mouse activity
+-   question navigation
+
+Then create controlled datasets.
+
+------------------------------------------------------------------------
+
+59. MVP Feature Set
+
+Start with approximately 20–40 carefully selected features.
+
+Example:
+
+Focus:
+
+1.  blur_count
+2.  focus_count
+3.  avg_blur_duration
+4.  max_blur_duration
+
+Typing:
+
+5.  chars_per_second
+6.  avg_key_interval
+7.  key_interval_std
+8.  typing_duration
+9.  backspace_ratio
+
+Answer:
+
+10. answer_length
+11. answer_growth_rate
+12. answer_change_count
+13. max_answer_jump
+14. deletion_ratio
+
+Clipboard:
+
+15. paste_count
+16. pasted_chars
+17. paste_to_typing_ratio
+
+Timing:
+
+18. time_to_first_input
+19. idle_duration
+20. time_to_submit
+
+Question:
+
+21. question_duration
+22. question_change_frequency
+
+Interaction:
+
+23. mouse_activity
+24. click_frequency
+
+Sequence:
+
+25. time_from_blur_to_focus
+26. time_from_focus_to_paste
+27. time_from_paste_to_submit
+28. time_from_idle_to_answer_change
+
+Baseline:
+
+29. typing_deviation
+30. answer_change_deviation
+
+These can provide a strong initial dataset.
+
+------------------------------------------------------------------------
+
+60. Recommended Development Phases
+
+Phase 1 — Telemetry
+
+Implement the browser event collector.
+
+Goal:
+
+Collect reliable, normalized behavioral data.
+
+No ML yet.
+
+------------------------------------------------------------------------
+
+Phase 2 — Data Pipeline
+
+Build:
+
+Browser → API → validation → storage → session reconstruction → feature
+extraction
+
+Goal:
+
+Create training-ready datasets.
+
+------------------------------------------------------------------------
+
+Phase 3 — Controlled Dataset
+
+Run controlled experiments.
+
+Collect:
+
+-   normal sessions
+-   AI-assisted sessions
+-   legitimate unusual sessions
+
+Goal:
+
+Create reliable labels.
+
+------------------------------------------------------------------------
+
+Phase 4 — Baseline Model
+
+Train:
+
+XGBoost / LightGBM.
+
+Goal:
+
+Establish a measurable baseline.
+
+------------------------------------------------------------------------
+
+Phase 5 — Sequence Model
+
+Train:
+
+LSTM/GRU.
+
+Compare against XGBoost.
+
+Goal:
+
+Determine whether temporal sequence information improves detection.
+
+------------------------------------------------------------------------
+
+Phase 6 — Transformer
+
+If sufficient data exists:
+
+Transformer Encoder.
+
+Goal:
+
+Capture complex temporal relationships.
+
+------------------------------------------------------------------------
+
+Phase 7 — Real-Time API
+
+Deploy:
+
+Browser → Backend → Model → Risk score
+
+Goal:
+
+Real-time monitoring.
+
+------------------------------------------------------------------------
+
+Phase 8 — Post-Test Analysis
+
+Replay complete sessions.
+
+Run deeper model.
+
+Goal:
+
+Improve accuracy and provide proctor evidence.
+
+------------------------------------------------------------------------
+
+61. Recommended Final Architecture
+
+The architecture I would target is:
+
+                    Candidate
+                        |
+                        v
+                 Test Webpage
+                        |
+                        v
+                Event Collector
+                        |
+                        v
+               Local Aggregation
+                        |
+                        v
+                 Batch Telemetry
+                        |
+                        v
+                  Backend API
+                        |
+            +-----------+-----------+
+            |                       |
+            v                       v
+       Real-time model        Session storage
+            |                       |
+            v                       v
+       Current risk            Full sequence
+                                    |
+                                    v
+                            Deep sequence model
+                                    |
+                                    v
+                              Final risk score
+                                    |
+                    +---------------+---------------+
+                    |                               |
+                    v                               v
+             Proctor dashboard              Investigation data
+
+------------------------------------------------------------------------
+
+62. Key Design Principle
+
+The system should never be designed around:
+
+“Detect Cluely.”
+
+It should be designed around:
+
+“Detect behavioral patterns that are statistically associated with
+unauthorized external assistance.”
+
+This makes the system more general and allows it to detect new AI tools
+without needing a separate detector for every product.
+
+------------------------------------------------------------------------
+
+63. Final Expected Output
+
+For every session:
+
+{ “sessionId”: “abc123”, “riskScore”: 0.84, “riskLevel”: “high”,
+“modelVersion”: “behavioral-xgb-v1.0”, “signals”: [
+“large_answer_change_after_idle”, “unusual_typing_pattern”,
+“focus_transition_before_answer_change” ] }
+
+The result should be treated as a proctoring signal rather than
+definitive proof of misconduct.
+
+------------------------------------------------------------------------
+
+64. Most Important Research Question
+
+The central question for this project is:
+
+  Which browser-observable behavioral sequences provide statistically
+  significant evidence of external AI assistance while remaining
+  sufficiently different from legitimate candidate behavior?
+
+Once this is answered through controlled data collection and
+experimentation, the ML model becomes the mechanism for learning and
+combining those signals.
+
+The initial recommended path is therefore:
+
+1.  Instrument browser telemetry.
+2.  Define a minimal privacy-conscious event schema.
+3.  Build session and time-window aggregation.
+4.  Collect controlled normal and AI-assisted sessions.
+5.  Add legitimate unusual-behavior examples.
+6.  Train an XGBoost baseline.
+7.  Evaluate false positives and false negatives.
+8.  Introduce LSTM/GRU if sequence information improves performance.
+9.  Move to a Transformer only when dataset size justifies it.
+10. Deploy the model behind a backend API.
+11. Combine real-time risk with post-test sequence analysis.
+12. Continuously retrain and evaluate against new AI-assisted behaviors.

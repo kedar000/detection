@@ -1,0 +1,1759 @@
+Backend API Model for AI Overlay Detection
+
+1. Objective
+
+The backend API model is responsible for receiving browser-observable
+behavioral telemetry from the test webpage, validating and processing
+it, running the AI/ML detection model, maintaining the candidate’s
+session-level risk state, and returning a behavioral risk score.
+
+The backend does not directly detect the visual AI overlay.
+
+Instead:
+
+Browser → behavioral telemetry → backend API → feature extraction → ML
+inference → temporal risk aggregation → risk score
+
+The backend becomes the trusted processing and inference layer while the
+browser remains responsible for collecting observable signals.
+
+------------------------------------------------------------------------
+
+2. Why Backend Inference
+
+Running the complete detection model only in the browser creates several
+problems:
+
+-   the candidate can inspect the model
+-   JavaScript can potentially be modified
+-   model parameters can be extracted
+-   API calls can be blocked
+-   events can potentially be manipulated
+-   model logic is exposed to the client
+
+Moving inference to the backend provides better control over:
+
+-   model versioning
+-   feature engineering
+-   model updates
+-   centralized logging
+-   session analysis
+-   monitoring
+-   threshold management
+-   security
+-   retraining
+-   experimentation
+
+The browser should therefore act primarily as a telemetry collector.
+
+------------------------------------------------------------------------
+
+3. High-Level Architecture
+
+Recommended architecture:
+
+Test Browser | | behavioral events v Telemetry API | v Authentication /
+Session Validation | v Event Validation | v Event Normalization | v
+Feature Extraction | v ML Inference | v Risk Aggregation | v Risk State
+| +—-> Proctor Dashboard | +—-> Session Storage | +—-> Monitoring /
+Analytics
+
+For larger systems:
+
+Browser | v API Gateway | v Behavior Telemetry Service | +—-> Event
+Queue | +—-> Feature Service | +—-> ML Inference Service | +—-> Risk
+Engine | v Risk Store
+
+------------------------------------------------------------------------
+
+4. Core Responsibilities of the Backend
+
+The backend should perform the following responsibilities:
+
+1.  Authenticate the test session.
+2.  Receive behavioral telemetry.
+3.  Validate the telemetry.
+4.  Detect malformed or impossible events.
+5.  Normalize timestamps and event structures.
+6.  Reconstruct the behavioral sequence.
+7.  Generate features.
+8.  Run the behavioral model.
+9.  Aggregate predictions over time.
+10. Maintain session risk state.
+11. Store relevant evidence.
+12. Return risk information to authorized consumers.
+13. Track model versions.
+14. Support post-test analysis.
+15. Monitor model and API performance.
+
+------------------------------------------------------------------------
+
+5. API Design
+
+A basic API can expose:
+
+POST /api/v1/behavior/events
+
+GET /api/v1/behavior/session/{sessionId}/risk
+
+POST /api/v1/behavior/session/{sessionId}/finalize
+
+GET /api/v1/behavior/session/{sessionId}/summary
+
+For an MVP, only the first endpoint may be required for real-time
+detection.
+
+------------------------------------------------------------------------
+
+6. Event Ingestion API
+
+Example request:
+
+POST /api/v1/behavior/events
+
+{ “sessionId”: “session-123”, “sequenceNumber”: 104, “clientTimestamp”:
+1724500000000, “events”: [ { “type”: “blur”, “timestamp”: 1724500001000,
+“metadata”: {} }, { “type”: “focus”, “timestamp”: 1724500002800,
+“metadata”: {} }, { “type”: “paste”, “timestamp”: 1724500003500,
+“metadata”: { “charactersInserted”: 450 } } ] }
+
+Response:
+
+{ “sessionId”: “session-123”, “riskScore”: 0.72, “riskLevel”:
+“suspicious”, “modelVersion”: “behavioral-xgb-v1.0” }
+
+The response should not expose internal model details that could help
+candidates reverse engineer the detection system.
+
+------------------------------------------------------------------------
+
+7. Authentication
+
+Every telemetry request should be associated with a valid test session.
+
+Possible flow:
+
+Candidate logs in | v Test session created | v Session token generated |
+v Browser sends token with telemetry | v Backend validates session | v
+Accept events
+
+The backend should verify:
+
+-   session exists
+-   session belongs to the candidate
+-   session is active
+-   test is active
+-   request is authorized
+-   session has not expired
+
+Do not trust sessionId alone.
+
+------------------------------------------------------------------------
+
+8. API Authentication Options
+
+Depending on the existing platform:
+
+Option A — JWT
+
+Browser sends:
+
+Authorization: Bearer
+
+Backend validates the token.
+
+Option B — Existing test-session token
+
+If the testing platform already has a secure session mechanism, reuse
+it.
+
+Option C — Short-lived telemetry token
+
+The main application creates a short-lived token specifically for
+telemetry.
+
+This can reduce exposure of broader authentication credentials.
+
+The final choice should fit the existing authentication architecture.
+
+------------------------------------------------------------------------
+
+9. Event Validation
+
+Never directly trust browser events.
+
+The backend should validate:
+
+-   event type
+-   timestamp
+-   sessionId
+-   questionId
+-   sequence number
+-   metadata types
+-   metadata ranges
+-   event ordering
+-   request size
+
+Example invalid event:
+
+{ “type”: “paste”, “charactersInserted”: -500 }
+
+This should be rejected.
+
+Another suspicious event:
+
+event timestamp: 1000000000
+
+next event: 100
+
+The backend can detect timestamp reversal.
+
+------------------------------------------------------------------------
+
+10. Sequence Numbers
+
+Every batch should contain a monotonically increasing sequence number.
+
+Example:
+
+101 102 103 104
+
+If the backend receives:
+
+101 102 104
+
+then batch 103 is missing.
+
+This does not necessarily mean cheating.
+
+Possible reasons:
+
+-   network failure
+-   browser crash
+-   request failure
+-   page suspension
+
+But it becomes useful telemetry.
+
+The backend can record:
+
+missingBatch = true
+
+instead of directly marking the candidate suspicious.
+
+------------------------------------------------------------------------
+
+11. Timestamp Handling
+
+There are two different timestamps to consider.
+
+Client timestamp:
+
+time recorded by browser.
+
+Server timestamp:
+
+time request reached backend.
+
+The client timestamp is useful for reconstructing behavior.
+
+The server timestamp is useful for:
+
+-   request ordering
+-   network analysis
+-   detecting impossible timing
+-   audit logs
+
+Client clocks should not be treated as authoritative.
+
+For interval calculations, browser monotonic timing such as
+performance.now() can be useful.
+
+------------------------------------------------------------------------
+
+12. Event Normalization
+
+Different browsers may produce different event patterns.
+
+The backend should convert raw events into a common schema.
+
+Example:
+
+Browser event:
+
+keydown
+
+becomes:
+
+{ “eventType”: “KEY_PRESS”, “timestamp”: …, “category”: “CHARACTER” }
+
+Another browser’s event should produce the same normalized
+representation.
+
+This makes the ML model browser-independent.
+
+------------------------------------------------------------------------
+
+13. Event Storage
+
+Do not necessarily store every raw event forever.
+
+Possible architecture:
+
+Short-term raw event storage | v Feature extraction | v Aggregated
+behavioral data | v Long-term storage
+
+For example:
+
+Raw events: retain for a limited period.
+
+Aggregated features: retain longer for model analysis.
+
+Model predictions: retain with session metadata and model version.
+
+Retention should follow the organization’s privacy and compliance
+requirements.
+
+------------------------------------------------------------------------
+
+14. Data Model
+
+Possible entities:
+
+TestSession
+
+-   id
+-   candidateId
+-   testId
+-   startTime
+-   endTime
+-   status
+-   browser
+-   operatingSystem
+
+BehaviorEvent
+
+-   id
+-   sessionId
+-   questionId
+-   eventType
+-   clientTimestamp
+-   serverTimestamp
+-   sequenceNumber
+-   metadata
+
+BehaviorWindow
+
+-   sessionId
+-   windowStart
+-   windowEnd
+-   featureVector
+
+RiskPrediction
+
+-   sessionId
+-   timestamp
+-   modelVersion
+-   riskScore
+-   riskLevel
+
+RiskSignal
+
+-   predictionId
+-   feature
+-   contribution
+-   explanation
+
+------------------------------------------------------------------------
+
+15. Synchronous vs Asynchronous Processing
+
+There are two major approaches.
+
+Synchronous
+
+Browser | v API | v Feature extraction | v ML inference | v Response
+
+Advantages:
+
+-   immediate result
+-   simple architecture
+-   easy MVP
+
+Disadvantages:
+
+-   API latency depends on model
+-   higher backend load
+-   model failures directly affect request latency
+
+------------------------------------------------------------------------
+
+16. Asynchronous Processing
+
+Browser | v API | v Message Queue | v ML Worker | v Risk Store
+
+Examples of queue technologies:
+
+-   Kafka
+-   RabbitMQ
+-   Redis Streams
+-   cloud messaging systems
+
+Advantages:
+
+-   scalable
+-   resilient
+-   decouples ingestion from inference
+-   suitable for large candidate volumes
+
+Disadvantages:
+
+-   more infrastructure
+-   risk score is not immediately available
+-   more complex debugging
+
+------------------------------------------------------------------------
+
+17. Recommended Architecture
+
+For MVP:
+
+Browser → REST API → feature extraction → XGBoost → risk state
+
+For production at scale:
+
+Browser → API Gateway → Telemetry Service → Kafka/Queue → ML Inference
+Service → Risk Engine → Risk Store
+
+The first architecture should be implemented before introducing
+distributed infrastructure.
+
+------------------------------------------------------------------------
+
+18. Feature Extraction Service
+
+The ML model should not receive raw events directly unless it was
+specifically designed for raw event sequences.
+
+The backend can transform:
+
+raw events
+
+into:
+
+behavioral features.
+
+Example:
+
+Raw:
+
+blur focus paste 400 chars submit
+
+Features:
+
+blurCount = 1 blurDuration = 2.1 pasteCount = 1 pastedCharacters = 400
+timeFocusToPaste = 0.7 timePasteToSubmit = 2.4
+
+These features are then passed to the model.
+
+------------------------------------------------------------------------
+
+19. Feature Store
+
+For larger systems, maintain reusable behavioral features.
+
+Example:
+
+session_123:
+
+{ “blurCount”: 4, “pasteCount”: 2, “avgTypingSpeed”: 3.4,
+“maxAnswerJump”: 620, “avgIdleDuration”: 4.1 }
+
+The feature store can support:
+
+-   real-time inference
+-   post-test analysis
+-   model training
+-   debugging
+
+For an MVP, a dedicated feature-store product is unnecessary.
+
+A database table or in-memory representation is sufficient.
+
+------------------------------------------------------------------------
+
+20. ML Inference Service
+
+The ML model can be exposed through a dedicated service.
+
+Example:
+
+POST /predict
+
+Request:
+
+{ “sessionId”: “123”, “features”: { “blurCount”: 2, “pasteCount”: 1,
+“typingSpeed”: 3.1, “answerJump”: 450 } }
+
+Response:
+
+{ “score”: 0.78, “modelVersion”: “behavior-xgb-v1.0” }
+
+The inference service should remain independent from the telemetry API
+when the system grows.
+
+------------------------------------------------------------------------
+
+21. Technology Options
+
+If the existing backend is Node.js:
+
+Node.js API | v Python ML service | v XGBoost
+
+This is often practical because:
+
+Node.js: - API - authentication - session management - business logic
+
+Python: - ML - feature experimentation - model inference
+
+Alternatively:
+
+Node.js | v ONNX Runtime | v ONNX model
+
+This can remove the need for a separate Python inference service.
+
+------------------------------------------------------------------------
+
+22. FastAPI ML Service
+
+A practical initial architecture:
+
+Main Backend | | POST /predict v FastAPI ML Service | v XGBoost model
+
+FastAPI handles:
+
+-   request validation
+-   feature validation
+-   model loading
+-   inference
+-   model versioning
+-   health checks
+
+The main backend remains responsible for authentication and test
+sessions.
+
+------------------------------------------------------------------------
+
+23. Model Loading
+
+The model should be loaded once when the inference service starts.
+
+Bad:
+
+request -> load model -> predict -> unload model
+
+Better:
+
+service starts | v load model into memory | v wait for requests | v
+predict
+
+This significantly reduces latency.
+
+------------------------------------------------------------------------
+
+24. Model Versioning
+
+Every prediction must store:
+
+modelVersion
+
+Example:
+
+behavior-xgb-v1.0 behavior-xgb-v1.1 behavior-transformer-v2.0
+
+Why?
+
+Suppose:
+
+Session A: risk = 0.81 model = v1.0
+
+Session B: risk = 0.74 model = v2.0
+
+Without model versions, comparing these scores becomes difficult.
+
+Model versions are essential for auditability.
+
+------------------------------------------------------------------------
+
+25. Model Configuration
+
+Keep model configuration separate from application code.
+
+Possible configuration:
+
+{ “modelVersion”: “behavior-xgb-v1.0”, “windowSizeSeconds”: 30,
+“riskThreshold”: 0.75, “highRiskThreshold”: 0.90 }
+
+Thresholds should be configurable rather than hard-coded.
+
+------------------------------------------------------------------------
+
+26. Risk Engine
+
+The ML model produces a prediction.
+
+The risk engine converts predictions into session state.
+
+Example:
+
+ML:
+
+0.72
+
+Risk engine:
+
+currentRisk = 0.68 riskLevel = “suspicious”
+
+The risk engine can apply:
+
+-   smoothing
+-   historical predictions
+-   baseline deviation
+-   repeated-event weighting
+-   confidence thresholds
+
+------------------------------------------------------------------------
+
+27. Risk State Machine
+
+Possible states:
+
+NORMAL | v MONITORING | v SUSPICIOUS | v HIGH_RISK
+
+Transitions should depend on repeated evidence.
+
+For example:
+
+NORMAL → one suspicious prediction
+
+could become:
+
+MONITORING
+
+not:
+
+HIGH_RISK
+
+Only sustained evidence should move to a higher state.
+
+------------------------------------------------------------------------
+
+28. Risk Smoothing
+
+Raw predictions may fluctuate:
+
+0.2 0.8 0.3 0.7 0.2
+
+This is not necessarily meaningful.
+
+Use smoothing.
+
+Example:
+
+smoothedRisk = alpha * currentRisk + (1 - alpha) * previousRisk
+
+This produces a more stable signal.
+
+The value of alpha should be determined experimentally.
+
+------------------------------------------------------------------------
+
+29. Session Risk
+
+The backend should maintain a session-level risk.
+
+Example:
+
+Question 1 = 0.12 Question 2 = 0.18 Question 3 = 0.71 Question 4 = 0.82
+Question 5 = 0.79
+
+Session risk:
+
+0.73
+
+This allows the proctor dashboard to see the overall state rather than
+thousands of individual predictions.
+
+------------------------------------------------------------------------
+
+30. Question-Level Risk
+
+It is also useful to store risk by question.
+
+Example:
+
+Question 14: risk = 0.87
+
+Question 15: risk = 0.21
+
+Question 16: risk = 0.81
+
+This can help identify where unusual behavior occurred.
+
+It also provides useful data for post-test review.
+
+------------------------------------------------------------------------
+
+31. Proctor Dashboard API
+
+The dashboard should receive summarized information.
+
+Example:
+
+GET /api/v1/proctor/sessions/{sessionId}/risk
+
+Response:
+
+{ “sessionId”: “abc”, “currentRisk”: 0.82, “riskLevel”: “high”, “trend”:
+“increasing”, “signals”: [ “unusual_answer_growth”,
+“focus_transition_pattern” ], “lastUpdated”: “…” }
+
+The proctor should not need raw telemetry.
+
+------------------------------------------------------------------------
+
+32. Real-Time Updates
+
+Possible options:
+
+Polling:
+
+Dashboard → GET risk → every 5 seconds
+
+WebSocket:
+
+Backend → pushes risk update
+
+Server-Sent Events:
+
+Backend → stream updates
+
+For a small MVP, polling is simpler.
+
+For a large proctoring system, WebSocket/SSE may be preferable.
+
+------------------------------------------------------------------------
+
+33. Rate Limiting
+
+A malicious client could generate thousands of fake events.
+
+The telemetry API needs limits.
+
+Examples:
+
+-   maximum requests per second
+-   maximum events per batch
+-   maximum batch size
+-   maximum session event rate
+
+If a candidate suddenly sends:
+
+100,000 events/sec
+
+the backend should reject or throttle the request.
+
+------------------------------------------------------------------------
+
+34. Payload Validation
+
+Use strict schema validation.
+
+Possible fields:
+
+sessionId: string
+
+sequenceNumber: integer
+
+eventType: enum
+
+timestamp: integer
+
+metadata: object
+
+Reject:
+
+-   unknown event types
+-   oversized metadata
+-   invalid numbers
+-   impossible timestamps
+-   malformed JSON
+
+------------------------------------------------------------------------
+
+35. Idempotency
+
+Requests may be retried.
+
+Example:
+
+Browser sends batch 105.
+
+Network timeout occurs.
+
+Browser retries batch 105.
+
+Backend must not process the batch twice.
+
+Use:
+
+sessionId + sequenceNumber
+
+as an idempotency key.
+
+------------------------------------------------------------------------
+
+36. Network Failure Handling
+
+The browser should maintain a local queue.
+
+Example:
+
+events | v local buffer | +–> API available -> send | +–> API
+unavailable -> retain | v retry
+
+Backend should acknowledge the batch.
+
+Example:
+
+{ “sequenceNumber”: 105, “accepted”: true }
+
+------------------------------------------------------------------------
+
+37. Offline Detection
+
+If telemetry is missing for 30 seconds, the backend should not
+automatically interpret this as AI usage.
+
+Possible reasons:
+
+-   network outage
+-   browser crash
+-   system sleep
+-   page freeze
+-   server outage
+
+Instead:
+
+telemetryHealth = degraded
+
+This should be separate from:
+
+aiRisk
+
+------------------------------------------------------------------------
+
+38. Separate Risk From Telemetry Integrity
+
+Maintain two independent scores.
+
+AI Risk:
+
+“Does behavior look suspicious?”
+
+Telemetry Integrity:
+
+“Can we trust that telemetry is being received correctly?”
+
+Example:
+
+AI risk = 0.30 Telemetry integrity = 0.25
+
+This means:
+
+behavior appears normal, but telemetry collection is unreliable.
+
+Do not combine these automatically.
+
+------------------------------------------------------------------------
+
+39. Tamper Detection
+
+Because the client is untrusted, detect obvious manipulation.
+
+Possible signals:
+
+-   impossible timestamps
+-   event rate anomalies
+-   sequence gaps
+-   duplicate batches
+-   invalid event transitions
+-   unexpected API disconnects
+-   modified payload structure
+-   unusual request patterns
+
+These become integrity signals.
+
+They should not automatically become AI usage signals.
+
+------------------------------------------------------------------------
+
+40. Backend Security
+
+Important controls:
+
+-   TLS
+-   authentication
+-   authorization
+-   rate limiting
+-   request validation
+-   payload limits
+-   logging
+-   secret management
+-   database encryption where required
+-   access controls
+-   audit logging
+
+The ML service should not be publicly accessible if unnecessary.
+
+A better design is:
+
+Main backend | private network | ML service
+
+------------------------------------------------------------------------
+
+41. Privacy
+
+The backend should avoid storing raw candidate content unless required.
+
+Prefer:
+
+“450 characters pasted”
+
+instead of:
+
+“the exact 450 characters pasted”
+
+Possible stored data:
+
+-   counts
+-   durations
+-   timing
+-   lengths
+-   event categories
+
+This provides useful behavioral information while reducing unnecessary
+data collection.
+
+------------------------------------------------------------------------
+
+42. API Performance
+
+Inference latency should ideally be low enough for real-time monitoring.
+
+Target:
+
+Telemetry API: low tens of milliseconds where possible.
+
+Feature extraction: small.
+
+XGBoost inference: typically very fast.
+
+Network latency: usually the dominant factor.
+
+The exact target should be determined through load testing.
+
+------------------------------------------------------------------------
+
+43. Scalability
+
+Suppose:
+
+10,000 candidates
+
+and each candidate sends:
+
+1 batch / 10 seconds
+
+That is approximately:
+
+1,000 requests/sec.
+
+If:
+
+100,000 candidates
+
+then:
+
+10,000 requests/sec.
+
+The architecture must therefore separate:
+
+ingestion capacity
+
+from:
+
+ML inference capacity.
+
+This is one reason queues become useful at large scale.
+
+------------------------------------------------------------------------
+
+44. Horizontal Scaling
+
+Telemetry API:
+
+API instance 1 API instance 2 API instance 3 …
+
+ML service:
+
+ML instance 1 ML instance 2 ML instance 3 …
+
+A load balancer distributes traffic.
+
+The model should be loaded on every inference instance.
+
+------------------------------------------------------------------------
+
+45. Queue-Based Production Architecture
+
+For high-scale systems:
+
+Browser | v Load Balancer | v Telemetry API | v Kafka | +——–+——–+ | | |
+v v v Worker Worker Worker | | | +——–+——–+ | v ML Inference | v Risk
+Engine | v Risk Store
+
+This allows ingestion and inference to scale independently.
+
+------------------------------------------------------------------------
+
+46. Kafka Considerations
+
+If Kafka is already available in the platform, it can be useful.
+
+Partition key:
+
+sessionId
+
+This helps maintain ordering for a session.
+
+Example:
+
+partition = hash(sessionId)
+
+All events for the same session can therefore be routed consistently.
+
+This is important for sequence reconstruction.
+
+Kafka should not be introduced merely because it is available; it adds
+operational complexity and is most valuable when scale requires it.
+
+------------------------------------------------------------------------
+
+47. Redis Usage
+
+Redis can be useful for real-time session state.
+
+Example:
+
+session:123:risk
+
+{ “current”: 0.82, “previous”: 0.76, “updatedAt”: “…”, “riskLevel”:
+“high” }
+
+Redis is useful for:
+
+-   low-latency risk state
+-   recent feature windows
+-   rate limiting
+-   temporary event buffers
+
+Long-term records should remain in durable storage.
+
+------------------------------------------------------------------------
+
+48. Database Usage
+
+A relational database can store:
+
+-   sessions
+-   risk predictions
+-   model versions
+-   question-level summaries
+-   proctor alerts
+
+Raw high-volume telemetry may be better suited to specialized storage
+depending on scale.
+
+For MVP:
+
+PostgreSQL is sufficient.
+
+------------------------------------------------------------------------
+
+49. Observability
+
+The backend needs monitoring for:
+
+API latency API errors event ingestion rate dropped events model
+inference latency model errors queue lag prediction distribution risk
+distribution
+
+Example metrics:
+
+telemetry_requests_total telemetry_invalid_total telemetry_latency_ms
+ml_inference_latency_ms ml_prediction_total high_risk_sessions_total
+
+------------------------------------------------------------------------
+
+50. Model Monitoring
+
+The backend should monitor the model itself.
+
+Watch for:
+
+-   sudden increase in high-risk predictions
+-   sudden decrease in high-risk predictions
+-   prediction distribution changes
+-   browser-specific anomalies
+-   candidate-group differences
+-   false-positive reports
+-   model latency changes
+
+A sudden change may indicate:
+
+-   model drift
+-   browser update
+-   frontend telemetry bug
+-   new AI tool behavior
+-   deployment problem
+
+------------------------------------------------------------------------
+
+51. Data Drift
+
+Suppose training data has:
+
+average typing speed = 3 chars/sec
+
+Production later shows:
+
+average = 5 chars/sec
+
+This may indicate:
+
+-   different candidate population
+-   different device population
+-   model drift
+-   test format change
+
+The backend should track feature distributions.
+
+------------------------------------------------------------------------
+
+52. Model Drift
+
+AI tools evolve.
+
+An old model may learn:
+
+blur → focus → paste
+
+but a new AI tool might avoid causing blur.
+
+The behavioral distribution changes.
+
+Therefore:
+
+production telemetry | v new patterns | v review | v retraining dataset
+| v new model
+
+------------------------------------------------------------------------
+
+53. Model Retraining Pipeline
+
+A practical process:
+
+Production data | v Candidate sessions | v Human-reviewed labels | v
+Training dataset | v Feature engineering | v Model training | v Offline
+evaluation | v Shadow deployment | v Production deployment
+
+Do not automatically deploy every newly trained model.
+
+------------------------------------------------------------------------
+
+54. Shadow Mode
+
+A new model can run without affecting proctor decisions.
+
+Example:
+
+Production model: v1.0 → actual risk
+
+New model: v2.0 → shadow prediction
+
+Compare:
+
+v1.0 = 0.73 v2.0 = 0.81
+
+Collect statistics before switching production traffic.
+
+This is safer.
+
+------------------------------------------------------------------------
+
+55. A/B Testing
+
+Different model versions can be evaluated against controlled
+populations.
+
+However, because this concerns assessment integrity, model experiments
+should not create inconsistent candidate treatment without appropriate
+governance.
+
+A safer initial approach is:
+
+offline evaluation + shadow mode
+
+before production A/B testing.
+
+------------------------------------------------------------------------
+
+56. Explainability API
+
+The backend can expose model explanations to internal proctoring
+systems.
+
+Example:
+
+{ “riskScore”: 0.86, “signals”: [ { “name”: “large_answer_jump”,
+“importance”: 0.18 }, { “name”: “unusual_typing_pattern”, “importance”:
+0.13 } ] }
+
+This makes the system easier to audit.
+
+Do not expose detailed model thresholds or weights to the candidate.
+
+------------------------------------------------------------------------
+
+57. Error Handling
+
+Possible errors:
+
+400: invalid telemetry
+
+401: unauthorized session
+
+403: session not allowed
+
+413: payload too large
+
+429: rate limit exceeded
+
+500: internal server error
+
+503: ML service unavailable
+
+The frontend should handle temporary failures without terminating the
+test.
+
+------------------------------------------------------------------------
+
+58. ML Service Failure
+
+If ML inference fails:
+
+Do not automatically flag the candidate.
+
+Instead:
+
+mlStatus = unavailable
+
+Continue collecting telemetry.
+
+When the service recovers:
+
+process queued telemetry if possible.
+
+This prevents infrastructure failures from becoming candidate penalties.
+
+------------------------------------------------------------------------
+
+59. Backend API Failure
+
+If the telemetry API is unavailable:
+
+Browser: continue test
+
+Local buffer: store telemetry
+
+Retry: send later
+
+The testing experience should not depend entirely on real-time AI
+inference availability.
+
+------------------------------------------------------------------------
+
+60. Finalization API
+
+When the test ends:
+
+POST /api/v1/behavior/session/{sessionId}/finalize
+
+The backend can:
+
+1.  flush remaining events
+2.  process remaining windows
+3.  run final inference
+4.  calculate session risk
+5.  generate summary
+6.  store final model version
+7.  mark behavioral analysis complete
+
+Response:
+
+{ “sessionId”: “123”, “finalRiskScore”: 0.81, “riskLevel”: “high”,
+“analysisStatus”: “complete” }
+
+------------------------------------------------------------------------
+
+61. Post-Test Deep Analysis
+
+The finalization stage can run a deeper model than the real-time model.
+
+Real-time:
+
+XGBoost
+
+Post-test:
+
+Transformer
+
+Architecture:
+
+Real-time model | v quick signal
+
+Test finished | v full sequence | v Transformer | v final assessment
+
+This provides both low latency and deeper analysis.
+
+------------------------------------------------------------------------
+
+62. Backend API and Behavioral Model Relationship
+
+The backend API is not the model itself.
+
+The separation should be:
+
+Behavioral Model:
+
+“What does this sequence mean?”
+
+Backend API:
+
+“How do we safely receive, process, run, store, and expose that model’s
+output?”
+
+This separation is important for maintainability.
+
+------------------------------------------------------------------------
+
+63. Recommended Service Separation
+
+Initial MVP:
+
+Test Backend | +– /behavior/events | +– Feature extraction | +– Model
+inference | +– Risk engine
+
+Later:
+
+API Gateway | +–> Test Service | +–> Telemetry Service | +–> Feature
+Service | +–> ML Service | +–> Risk Service
+
+Avoid premature microservices.
+
+------------------------------------------------------------------------
+
+64. End-to-End Example
+
+Candidate opens Question 10.
+
+Browser records:
+
+QUESTION_OPEN
+
+Candidate reads for 8 seconds.
+
+Browser records:
+
+IDLE
+
+Candidate briefly loses focus.
+
+Browser records:
+
+BLUR
+
+After 2 seconds:
+
+FOCUS
+
+Then candidate pastes 500 characters.
+
+Browser records:
+
+PASTE
+
+Answer length increases from 30 to 530.
+
+Browser records:
+
+ANSWER_CHANGE
+
+Browser sends the batch.
+
+Backend:
+
+1.  validates session
+2.  validates events
+3.  reconstructs sequence
+4.  calculates features
+5.  sends features to model
+6.  receives score = 0.82
+7.  applies risk smoothing
+8.  updates session risk
+9.  stores prediction
+10. returns current risk
+
+The proctor may see:
+
+High behavioral risk
+
+with supporting signals:
+
+-   focus transition
+-   large answer change
+-   paste immediately after focus
+-   unusual answer growth
+
+This does not claim:
+
+“AI definitely used.”
+
+------------------------------------------------------------------------
+
+65. Important Limitation
+
+The backend cannot solve the fundamental observability problem.
+
+If the candidate uses an external overlay and it causes:
+
+-   no focus change
+-   no clipboard event
+-   no unusual typing
+-   no unusual answer timing
+-   no detectable browser event
+-   no screenshot evidence
+
+then the backend receives no reliable evidence.
+
+No ML architecture can infer an invisible external action with certainty
+from nothing.
+
+Therefore the backend model should be described as:
+
+Behavioral AI-assistance detection
+
+rather than:
+
+Guaranteed AI-overlay detection.
+
+------------------------------------------------------------------------
+
+66. Recommended MVP Technology Stack
+
+A practical stack:
+
+Frontend: - React / TypeScript - browser event APIs - local event buffer
+
+Main Backend: - existing backend technology - REST API -
+authentication - validation - session management
+
+ML Service: - Python - FastAPI - scikit-learn - XGBoost
+
+Storage: - PostgreSQL
+
+Optional: - Redis for real-time state
+
+Later: - Kafka for high-volume telemetry - Transformer with PyTorch -
+ONNX for optimized inference
+
+------------------------------------------------------------------------
+
+67. Recommended Initial API Set
+
+Start with:
+
+POST /api/v1/behavior/events
+
+GET /api/v1/behavior/session/{sessionId}/risk
+
+POST /api/v1/behavior/session/{sessionId}/finalize
+
+GET /api/v1/behavior/session/{sessionId}/summary
+
+Internal:
+
+POST /internal/ml/predict
+
+GET /internal/ml/health
+
+GET /internal/ml/model
+
+Keep internal ML endpoints inaccessible from the public internet.
+
+------------------------------------------------------------------------
+
+68. Recommended MVP Flow
+
+Browser:
+
+collect events ↓ aggregate for 5–10 seconds ↓ send batch
+
+Backend:
+
+authenticate ↓ validate ↓ normalize ↓ store / buffer ↓ extract features
+↓ XGBoost ↓ risk engine ↓ store prediction ↓ return risk
+
+This is sufficient to begin experimentation.
+
+------------------------------------------------------------------------
+
+69. Production Flow
+
+For a large-scale system:
+
+Browser ↓ API Gateway ↓ Telemetry Service ↓ Validation ↓ Kafka ↓ Feature
+Processing ↓ ML Inference Service ↓ Risk Engine ↓ Redis + PostgreSQL ↓
+Proctor Dashboard
+
+After the test:
+
+Full session ↓ Deep sequence analysis ↓ Final risk report
+
+------------------------------------------------------------------------
+
+70. Main Backend Challenges
+
+The major challenges are:
+
+1.  Untrusted client telemetry.
+2.  Network failures.
+3.  High event volume.
+4.  Low-latency inference.
+5.  Session ordering.
+6.  Duplicate events.
+7.  Missing events.
+8.  Browser differences.
+9.  Model versioning.
+10. Model drift.
+11. Privacy.
+12. False positives.
+13. False negatives.
+14. Adversarial candidates.
+15. Infrastructure failures.
+16. Scalability.
+17. Explainability.
+18. Lack of ground truth.
+
+------------------------------------------------------------------------
+
+71. Most Important Design Decisions
+
+The project should explicitly decide:
+
+Event frequency
+
+How often should the browser send data?
+
+Initial recommendation: 5–10 second batches.
+
+Synchronous vs asynchronous
+
+Initial: synchronous.
+
+Large scale: queue-based.
+
+First model
+
+XGBoost.
+
+Sequence model
+
+LSTM/GRU, followed by Transformer if justified.
+
+Storage
+
+PostgreSQL initially.
+
+Real-time state
+
+Redis optionally.
+
+Message queue
+
+Kafka only when scale requires it.
+
+Inference
+
+Python FastAPI initially.
+
+Risk output
+
+Continuous 0–1 score rather than binary detection.
+
+------------------------------------------------------------------------
+
+72. Recommended Implementation Order
+
+Step 1
+
+Define event schema.
+
+Step 2
+
+Implement frontend telemetry collector.
+
+Step 3
+
+Implement:
+
+POST /behavior/events
+
+Step 4
+
+Validate and store telemetry.
+
+Step 5
+
+Build session reconstruction.
+
+Step 6
+
+Implement feature extraction.
+
+Step 7
+
+Create controlled dataset.
+
+Step 8
+
+Train XGBoost.
+
+Step 9
+
+Create ML inference API.
+
+Step 10
+
+Integrate inference into the backend.
+
+Step 11
+
+Implement risk aggregation.
+
+Step 12
+
+Expose risk to proctor dashboard.
+
+Step 13
+
+Implement post-test analysis.
+
+Step 14
+
+Evaluate LSTM/Transformer.
+
+Step 15
+
+Scale infrastructure if required.
+
+------------------------------------------------------------------------
+
+73. Final Recommended Architecture
+
+The complete target system is:
+
+                         TEST BROWSER
+                              |
+                              |
+                     Behavioral Events
+                              |
+                              v
+                       API Gateway
+                              |
+                              v
+                    Telemetry API
+                              |
+                   +----------+----------+
+                   |                     |
+                   v                     v
+              Validation             Session
+                   |                  Context
+                   +----------+----------+
+                              |
+                              v
+                       Event Processor
+                              |
+                              v
+                       Feature Engine
+                              |
+                              v
+                       ML Inference
+                              |
+                    +---------+---------+
+                    |                   |
+                    v                   v
+               Risk Engine         Prediction Store
+                    |
+                    v
+              Session Risk
+                    |
+          +---------+---------+
+          |                   |
+          v                   v
+
+Proctor Dashboard Post-Test Analysis | v Deep Sequence Model | v Final
+Risk Score
+
+------------------------------------------------------------------------
+
+74. Final Principle
+
+The backend should be treated as the central intelligence and trust
+boundary of the behavioral detection system.
+
+The browser collects observable signals.
+
+The backend:
+
+-   validates them
+-   reconstructs them
+-   converts them into features
+-   runs the ML model
+-   maintains temporal risk
+-   stores model predictions
+-   provides explainable signals
+-   supports post-test analysis
+-   continuously evaluates model performance
+
+The overall objective is not to prove that an overlay exists.
+
+The objective is to determine:
+
+  “Given the observable behavioral sequence of this candidate, how
+  strongly does the behavior resemble patterns associated with
+  unauthorized external AI assistance?”
+
+That distinction is essential for building a technically defensible
+system.

@@ -1,0 +1,650 @@
+AI Overlay Detection — Manager Proposal Guide
+
+1. Purpose
+
+Present the proposal as an evidence-driven ML investigation, not as a claim that AI can directly see an invisible overlay.
+
+Core proposition:
+"When the overlay itself is not observable, use browser-observable behavioral telemetry to identify statistically unusual interaction sequences associated with external AI assistance."
+
+2. Start With the Problem
+
+During online tests, candidates may use external AI assistance through desktop overlays or other tools. These overlays may not be part of the webpage DOM and may not appear in screenshots captured by the test application.
+
+Therefore, screenshot-based and DOM-based detection cannot reliably identify all AI-assisted interactions.
+
+Proposed solution:
+Collect browser-observable behavioral signals such as focus changes, typing timing, paste actions, answer modifications, mouse activity, question timing, and navigation patterns. Process them through a backend detection API and behavioral sequence model to produce an AI-assistance risk score.
+
+3. State the Fundamental Limitation
+
+The webpage cannot directly observe everything happening outside the browser.
+
+If an external overlay produces:
+- no focus change
+- no DOM change
+- no keyboard/clipboard effect
+- no timing or answer anomaly
+- no screenshot evidence
+
+then web-only behavioral detection cannot guarantee detection.
+
+The system detects behavioral evidence, not the physical overlay itself.
+
+4. Proposed Architecture
+
+Browser Test Page
+        |
+        | Behavioral Telemetry
+        v
+Backend Detection API
+        |
+        ├── Event Validation
+        ├── Event Normalization
+        ├── Session / Time-Window Aggregation
+        ├── Feature Extraction
+        ├── Behavioral Sequence Model
+        └── Risk Aggregation
+                    |
+                    v
+                Risk Score
+                    |
+          +---------+---------+
+          |         |         |
+          v         v         v
+       Real-Time  Post-Test  Proctor
+       Monitoring Analysis   Alerts
+
+Results can support:
+- Proctor Dashboard
+- Session Risk History
+- Investigation / Review
+
+5. What Is Behavioral Telemetry?
+
+Structured information about how the candidate interacts with the test webpage.
+
+Signals can include:
+- Focus / blur / visibility
+- Keyboard timing and typing bursts
+- Clipboard actions and paste timing
+- Mouse movement and clicks
+- Answer changes and answer growth
+- Question navigation
+- Time spent per question
+- Idle periods
+- Time between actions
+
+Prefer metadata such as counts, timing, and lengths over raw candidate content where raw content is unnecessary.
+
+6. Why Sequence Modeling?
+
+A single event is usually not enough.
+
+For example:
+PASTE
+
+does not mean AI use.
+
+But:
+IDLE → BLUR → FOCUS → PASTE → LARGE ANSWER CHANGE → SUBMIT
+
+may be more informative.
+
+The model therefore needs temporal context: what happened, when it happened, and what happened before and after it.
+
+7. Model Roadmap
+
+Phase 1:
+XGBoost / LightGBM using aggregated behavioral features.
+
+Why:
+- fast
+- effective on tabular data
+- works with smaller datasets
+- explainable
+- provides a baseline
+
+Phase 2:
+LSTM / GRU for temporal sequences.
+
+Phase 3:
+Transformer Encoder for longer and more complex sequences if the data justifies it.
+
+Do not start with the most complex model. First prove that the signals contain useful information.
+
+8. Why Backend Inference?
+
+Frontend-only inference exposes model logic and makes the model easier to inspect or manipulate.
+
+Backend inference provides:
+- centralized model management
+- consistent inference
+- model versioning
+- centralized logging
+- session-level analysis
+- controlled thresholds
+- easier monitoring and retraining
+
+The browser collects telemetry; the backend validates, processes, and performs inference.
+
+Important limitation: client telemetry is still not fully trustworthy in a web-only environment.
+
+9. Backend Responsibilities
+
+1. Authenticate test session.
+2. Receive behavioral telemetry.
+3. Validate events.
+4. Normalize events.
+5. Reconstruct sequences.
+6. Generate features.
+7. Run ML inference.
+8. Aggregate risk over time.
+9. Store predictions.
+10. Expose authorized risk information.
+11. Support post-test analysis.
+12. Track model versions.
+
+10. Risk Score
+
+Use a continuous AI-assistance risk score rather than a binary yes/no decision.
+
+Example:
+0.10 → low risk
+0.35 → normal/low concern
+0.60 → monitoring
+0.80 → suspicious
+0.90+ → high-priority review
+
+These thresholds are examples only and must be calibrated from validation data.
+
+The score is a risk signal, not proof of misconduct.
+
+11. Candidate Baseline
+
+Candidates have different normal behaviors.
+
+A candidate-specific baseline can measure deviation from that person's normal pattern.
+
+Example:
+Baseline typing speed = 3.5 chars/sec
+Current behavior = long idle followed by a large answer insertion.
+
+The deviation becomes a feature, not an automatic accusation.
+
+12. Training Data
+
+At minimum collect three categories:
+
+A. Normal
+Candidates complete tests without external AI assistance.
+
+B. AI-assisted
+Candidates use controlled external AI assistance.
+
+C. Legitimately unusual
+Examples:
+- permitted paste
+- very fast typing
+- long pauses
+- keyboard shortcuts
+- repeated answer edits
+- coding behavior
+- permitted external material
+
+The third class is critical; otherwise the model may learn "unusual = AI."
+
+13. Controlled Experiment
+
+Run controlled sessions with known labels and collect identical telemetry.
+
+Compare:
+- event distributions
+- feature distributions
+- sequence patterns
+- model performance
+
+Use multiple forms of AI assistance rather than training against only one product.
+
+14. Main Challenge: Observability
+
+If AI assistance produces no observable behavioral side effect, there is no reliable signal for a web-only model to learn from.
+
+This must be presented openly to the manager.
+
+15. Main Challenge: False Positives
+
+A paste or focus change can be legitimate.
+
+Never use:
+"if paste then suspicious."
+
+Use combinations of:
+- timing
+- focus
+- typing
+- answer changes
+- question context
+- candidate baseline
+- sequence patterns
+
+16. Main Challenge: False Negatives
+
+A sophisticated candidate may deliberately behave normally or use an overlay without producing detectable browser-side effects.
+
+Behavioral detection is therefore probabilistic.
+
+17. Main Challenge: Adversarial Behavior
+
+Candidates may learn the signals being monitored and adapt.
+
+Mitigations:
+- do not expose exact thresholds
+- continuously evaluate new behavior
+- collect reviewed cases
+- retrain models
+- monitor model drift
+- test adversarial scenarios
+
+18. Main Challenge: Privacy
+
+Collect the minimum required data.
+
+Prefer:
+pastedCharacters = 450
+
+over storing the actual 450 characters when the content is unnecessary.
+
+Also consider:
+- encryption
+- access controls
+- retention limits
+- anonymized training data
+
+19. Main Challenge: Client Manipulation
+
+The browser can potentially be modified.
+
+Backend should validate:
+- event schemas
+- timestamps
+- sequence numbers
+- request rates
+- duplicate batches
+- impossible event sequences
+
+But client-side telemetry cannot be made completely trustworthy using web-only techniques.
+
+20. Main Challenge: Network Failure
+
+Network problems, browser crashes, or server failures can cause missing telemetry.
+
+Do not treat missing telemetry as AI usage.
+
+Maintain two separate concepts:
+AI Risk
+and
+Telemetry Integrity
+
+21. Evaluation
+
+Do not rely on accuracy alone.
+
+Measure:
+- Precision
+- Recall
+- F1
+- PR-AUC
+- False Positive Rate
+- False Negative Rate
+- ROC-AUC
+- Detection latency
+
+False-positive rate is especially important for a proctoring system.
+
+22. Data Splitting
+
+Split by candidate, not by individual event.
+
+Correct:
+Training candidates
+Validation candidates
+Test candidates
+
+Avoid placing sessions from the same candidate in both training and test sets.
+
+23. Compare With Rule-Based Detection
+
+Build a simple rule-based baseline and compare it with ML.
+
+Example:
+paste + blur + large answer change → suspicious
+
+ML should demonstrate measurable improvement in generalization, sequence handling, or false-positive reduction before replacing simple rules.
+
+24. Recommended Hybrid Design
+
+Browser telemetry
+      |
+      +----> Integrity rules
+      |
+      +----> Behavioral ML
+                 |
+                 v
+            Risk Engine
+
+Rules handle deterministic integrity problems.
+ML handles behavioral patterns and temporal relationships.
+
+25. Explainability
+
+For a risk score such as 0.84, show supporting behavioral signals:
+
+- unusual answer growth
+- focus transition
+- typing deviation
+- unusual timing relative to baseline
+
+Do not tell the proctor "candidate definitely used AI." Say that the behavioral pattern warrants review.
+
+26. Proctor Workflow
+
+Candidate takes test
+→ telemetry collected
+→ backend calculates risk
+→ risk trend changes when suspicious patterns persist
+→ proctor sees score, trend, signals, and timeline
+→ proctor investigates
+→ human makes final decision
+
+27. Session Risk History
+
+Store risk over time.
+
+Example:
+10:01 → 0.10
+10:05 → 0.14
+10:10 → 0.18
+10:15 → 0.65
+10:20 → 0.78
+10:25 → 0.83
+
+This shows when behavior changed instead of only showing a final score.
+
+28. Investigation View
+
+Provide a behavioral timeline such as:
+
+10:14:01 Question opened
+10:14:15 Typing starts
+10:14:21 Idle
+10:14:27 Blur
+10:14:29 Focus
+10:14:30 Paste
+10:14:31 Answer increases by 500 characters
+10:14:34 Submit
+
+This gives investigators context for the model's signal.
+
+29. Real-Time vs Post-Test
+
+Real-time:
+lightweight model for live risk and alerts.
+
+Post-test:
+deep sequence model for complete-session analysis.
+
+Real-time telemetry
+→ lightweight model
+→ live risk
+
+Full session
+→ deep sequence model
+→ final risk
+
+30. POC Proposal
+
+Do not request approval for the entire production system first.
+
+Propose a controlled POC:
+
+1. Define event schema.
+2. Implement browser event collector.
+3. Build backend telemetry API.
+4. Store sessions.
+5. Build feature extraction.
+6. Collect labeled normal, AI-assisted, and legitimately unusual sessions.
+7. Train XGBoost baseline.
+8. Evaluate performance.
+9. Analyze important signals.
+10. Decide whether LSTM/Transformer is justified.
+
+31. POC Deliverables
+
+Technical:
+- browser telemetry collector
+- backend API
+- event schema
+- feature pipeline
+- risk scoring API
+
+ML:
+- labeled dataset
+- feature analysis
+- evaluation metrics
+- confusion matrix
+- false-positive analysis
+- explainability
+
+Product:
+- example proctor dashboard
+- session risk history
+- investigation timeline
+
+32. POC Success Criteria
+
+1. Reliable event collection.
+2. Stable backend ingestion.
+3. Reproducible features.
+4. ML performs better than a simple rule baseline.
+5. False-positive rate meets an agreed target.
+6. Model generalizes to unseen candidates.
+7. Risk can be generated near real time.
+8. Proctors can understand why a session was flagged.
+
+Do not promise a target accuracy before establishing a baseline.
+
+33. Questions the Manager Is Likely to Ask
+
+Q: Can the webpage detect the overlay?
+A: Not directly when it is outside the webpage. We detect observable behavioral side effects.
+
+Q: Can this guarantee AI detection?
+A: No. If there is no observable signal, web-only detection cannot guarantee detection.
+
+Q: What are we collecting?
+A: Focus, visibility, keyboard timing, clipboard events, mouse activity, answer changes, question timing, navigation, and behavioral metadata.
+
+Q: Are we recording candidate text?
+A: We can primarily collect metadata such as timing, counts, and answer-length changes where raw text is not required.
+
+Q: Why AI instead of rules?
+A: Rules are a baseline; ML can learn interactions and temporal patterns across multiple signals.
+
+Q: Which model?
+A: Start with XGBoost. Evaluate LSTM/GRU and Transformer only if sequence information provides measurable improvement.
+
+Q: Where does training data come from?
+A: Controlled normal, AI-assisted, and legitimate-unusual sessions.
+
+Q: How do we know it is not just detecting paste?
+A: Include legitimate paste scenarios in training and evaluate multi-signal behavior.
+
+Q: What if someone behaves normally while using AI?
+A: It may not be detected if there is no observable behavioral difference.
+
+Q: What is the false-positive rate?
+A: The POC will establish this using held-out candidates and legitimate unusual scenarios.
+
+Q: Can candidates manipulate telemetry?
+A: Client telemetry cannot be fully trusted in a web-only environment. Backend validation reduces but cannot eliminate manipulation.
+
+Q: Will it slow the test?
+A: Telemetry can be batched and inference kept lightweight; the initial design should have minimal impact.
+
+Q: What happens if the network fails?
+A: Buffer and retry telemetry. Track telemetry integrity separately from AI risk.
+
+Q: How does the proctor use the score?
+A: Risk score, trend, contributing signals, and timeline prioritize human investigation.
+
+Q: Can it detect new AI tools?
+A: It aims to learn behavioral patterns rather than product signatures, but new behaviors require ongoing evaluation and retraining.
+
+Q: How do we prove it works?
+A: Controlled labeled experiments and comparison with a rule-based baseline using precision, recall, PR-AUC, and false-positive rate.
+
+Q: How do we handle privacy?
+A: Minimize collected data, avoid raw content where unnecessary, restrict access, and apply retention/security controls.
+
+34. Questions to Ask the Manager
+
+1. What detection confidence is required?
+2. What false-positive rate is acceptable?
+3. Is the goal real-time alerts, post-test investigation, or both?
+4. Which browsers must be supported?
+5. What backend infrastructure should be reused?
+6. What data-retention requirements apply?
+7. Can controlled AI-assisted sessions be generated for training?
+8. What privacy/security requirements apply?
+9. How many concurrent candidates must be supported?
+10. What is the expected POC timeline?
+11. What should constitute POC success?
+12. Is automatic action allowed, or is human review required?
+
+35. How to Present It in the Meeting
+
+Section 1 — Problem
+External AI overlays may not appear in DOM or screenshots.
+
+Section 2 — Current Limitation
+Visual detection cannot solve non-observable overlays.
+
+Section 3 — Proposed Idea
+Detect behavioral side effects.
+
+Section 4 — Behavioral Telemetry
+Focus, typing, paste, answer changes, timing, mouse, navigation.
+
+Section 5 — Architecture
+Browser → Backend API → Feature Extraction → Behavioral Model → Risk Engine.
+
+Section 6 — AI Approach
+XGBoost → LSTM/GRU → Transformer.
+
+Section 7 — Dataset
+Normal + AI-assisted + legitimately unusual.
+
+Section 8 — Evaluation
+Precision, recall, false positives, false negatives, PR-AUC.
+
+Section 9 — Limitations
+No observable signal means no guaranteed detection.
+
+Section 10 — POC
+Telemetry + backend + labeled dataset + baseline model.
+
+Section 11 — Expected Outcome
+Determine whether behavioral telemetry contains enough predictive signal for production development.
+
+36. Recommended Opening
+
+"The challenge we have is that an external AI overlay may not be visible in the webpage DOM or our periodic screenshots. Therefore, visual detection alone is not sufficient for all cases. Our proposed approach is to look for behavioral side effects of AI-assisted interaction. We collect browser-observable behavioral telemetry, process it on the backend, and use a sequence-based ML model to estimate an AI-assistance risk score.
+
+This will not guarantee detection of an overlay that produces no observable browser-side behavior. The goal is to determine whether behavioral patterns provide enough signal to reliably prioritize suspicious sessions."
+
+37. Recommended POC Pitch
+
+"I propose a controlled POC to determine whether behavioral telemetry provides enough predictive signal for AI-assisted interaction detection. We will build the telemetry pipeline, collect labeled normal/AI-assisted/legitimate-unusual sessions, train an initial XGBoost model, and evaluate its false-positive and false-negative behavior. Based on the results, we can decide whether a deeper sequence model such as LSTM or Transformer is justified."
+
+38. What Not to Promise
+
+Avoid:
+- 100% detection
+- every overlay
+- every AI product
+- zero false positives
+- zero false negatives
+- complete client-side security
+- detection when no observable signal exists
+
+Promise:
+- measurable behavioral risk scoring
+- controlled evaluation
+- explainable signals
+- continuous model improvement
+- human-review support
+- backend-controlled inference
+
+39. Final Roadmap
+
+Phase 0 — Architecture
+Define event schema, API contract, privacy requirements, features, evaluation criteria.
+
+Phase 1 — Telemetry POC
+Browser Event Collector → Backend API → Storage.
+
+Phase 2 — Dataset
+Normal + AI-assisted + legitimately unusual.
+
+Phase 3 — Baseline ML
+Train XGBoost.
+
+Phase 4 — Evaluation
+Precision, recall, F1, PR-AUC, false-positive rate, false-negative rate.
+
+Phase 5 — Sequence Modeling
+Evaluate LSTM/GRU.
+
+Phase 6 — Advanced Modeling
+Evaluate Transformer only if justified.
+
+Phase 7 — Real-Time Integration
+Backend → Risk Engine → Proctor Dashboard.
+
+Phase 8 — Post-Test Analysis
+Full session → deep sequence analysis → investigation report.
+
+Phase 9 — Production Hardening
+Scaling, monitoring, model versioning, drift detection, security, privacy, retraining.
+
+40. Final Recommendation
+
+Position the proposal as an evidence-driven ML investigation.
+
+Core proposition:
+
+"When the overlay itself is not observable, use the behavioral telemetry available to the webpage to identify statistically unusual interaction sequences associated with external AI assistance."
+
+Recommended first implementation:
+
+Browser
+→ Behavioral Telemetry
+→ Backend Detection API
+→ Event Validation
+→ Feature Extraction
+→ XGBoost Baseline
+→ Risk Aggregation
+→ Proctor Dashboard
+
+Then, based on measured results:
+
+XGBoost
+→ LSTM/GRU
+→ Transformer
+
+The POC should answer:
+
+"Does browser-observable behavioral telemetry provide enough reliable signal to distinguish AI-assisted sessions from normal and legitimately unusual sessions at an acceptable false-positive rate?"
+
+If yes, proceed toward a production-grade sequence model and backend detection service. If no, use the evidence to determine which additional observable signals or alternative detection mechanisms are required.
