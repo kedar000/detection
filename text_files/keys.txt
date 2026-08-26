@@ -1,0 +1,318 @@
+
+================================================================================
+SPECIAL CHARACTERS REFERENCE — MAC & WINDOWS
+================================================================================
+
+READ THIS FIRST — a quick correction that makes the rest of this file make sense
+--------------------------------------------------------------------------------
+- On Mac, the OPTION (⌥) key — NOT Command — is the one that types special
+  characters and accents. Option+A produces "å", Option+C produces "ç", etc.
+- COMMAND (⌘) is Mac's main shortcut key. Cmd+A means "Select All," Cmd+B means
+  "Bold" — it triggers an action, it does not produce a character.
+- CONTROL (⌃) on Mac is also mostly used for shortcuts (Control+click =
+  right-click). In Terminal / command-line apps, Control+letter sends a
+  real "control code" (e.g. Control+C cancels a running command) — that part
+  genuinely IS "Control + key produces something," so it's included below.
+- FN switches the top row between F1–F12 and media/system functions
+  (brightness, volume...), and does things like Fn+Delete = forward delete.
+  It does not combine with letters to produce printable characters.
+- Windows has no key that behaves like Mac's Option. Instead, Windows types
+  special characters with ALT + a number typed on the NUMERIC KEYPAD (hold
+  Alt, type the digits, release Alt). That's the closest true equivalent,
+  so it's what's listed under "Windows," organized by letter where possible.
+
+CONTENTS
+--------
+ 1. MAC   — Option key, A–Z
+ 2. MAC   — Shift + Option key, A–Z
+ 3. MAC   — Option key, numbers & punctuation
+ 4. MAC   — Command key shortcuts, A–Z (actions, not characters)
+ 5. MAC   — Control key (Terminal control codes + common shortcuts)
+ 6. MAC   — Fn key
+ 7. WINDOWS — Alt + Numpad codes for accented letters, A–Z
+ 8. WINDOWS — Alt + Numpad codes for common symbols
+ 9. WINDOWS — Ctrl key shortcuts, A–Z (actions, not characters)
+10. WINDOWS — Win key shortcuts, A–Z
+11. Notes & caveats
+
+
+================================================================================
+1. MAC — OPTION (⌥) KEY + LETTER  →  special character  [US keyboard layout]
+================================================================================
+Hold Option, press the letter, release both.
+
+  A  ->  å   a with ring above
+  B  ->  ∫   integral sign
+  C  ->  ç   c with cedilla
+  D  ->  ∂   partial differential
+  E  ->  ´   acute accent — DEAD KEY: release, then type a vowel -> é, á, í, ó, ú
+  F  ->  ƒ   florin / f with hook
+  G  ->  ©   copyright sign
+  H  ->  ˙   dot above
+  I  ->  ˆ   circumflex accent — DEAD KEY: e.g. + e -> ê, + o -> ô
+  J  ->  ∆   increment / delta
+  K  ->  ˚   ring above
+  L  ->  ¬   not sign
+  M  ->  µ   micro sign
+  N  ->  ˜   small tilde — DEAD KEY: + n -> ñ, + o -> õ, + a -> ã
+  O  ->  ø   o with stroke
+  P  ->  π   pi
+  Q  ->  œ   oe ligature
+  R  ->  ®   registered sign
+  S  ->  ß   sharp s / eszett
+  T  ->  †   dagger
+  U  ->  ¨   diaeresis — DEAD KEY: + u -> ü, + o -> ö, + e -> ë
+  V  ->  √   square root
+  W  ->  ∑   summation
+  X  ->  ≈   almost equal to
+  Y  ->  ¥   yen sign
+  Z  ->  Ω   omega
+
+
+================================================================================
+2. MAC — SHIFT + OPTION KEY + LETTER  →  special character
+================================================================================
+  A  ->  Å   capital A with ring above
+  B  ->  ı   dotless lowercase i
+  C  ->  Ç   capital C with cedilla
+  D  ->  Î   capital I with circumflex
+  E  ->  ´   acute accent (same dead key as unshifted)
+  F  ->  Ï   capital I with diaeresis
+  G  ->  ˝   double acute accent — dead key
+  H  ->  Ó   capital O with acute
+  I  ->  ˆ   circumflex accent (same dead key as unshifted)
+  J  ->  Ô   capital O with circumflex
+  K  ->     Apple logo — a private-use character; only renders correctly in a
+             few Apple system fonts, shows as a blank box almost everywhere else
+  L  ->  Ò   capital O with grave
+  M  ->  Â   capital A with circumflex
+  N  ->  ˜   small tilde (same dead key as unshifted)
+  O  ->  Ø   capital O with stroke
+  P  ->  ∏   n-ary product
+  Q  ->  Œ   capital OE ligature
+  R  ->  ‰   per mille sign
+  S  ->  Í   capital I with acute
+  T  ->  ˇ   caron — dead key
+  U  ->  ¨   diaeresis (same dead key as unshifted)
+  V  ->  ◊   lozenge
+  W  ->  „   double low-9 quotation mark
+  X  ->  ˛   ogonek — dead key
+  Y  ->  Á   capital A with acute
+  Z  ->  ¸   cedilla — dead key
+
+
+================================================================================
+3. MAC — OPTION KEY + NUMBERS / PUNCTUATION
+================================================================================
+                    OPTION alone            OPTION + SHIFT
+  1        ->       ¡  inverted "!"         ⁄  fraction slash
+  2        ->       ™  trademark            €  euro sign
+  3        ->       £  pound sterling       ‹  single left angle quote
+  4        ->       ¢  cent sign            ›  single right angle quote
+  5        ->       ∞  infinity             ﬁ  ligature "fi"
+  6        ->       §  section sign         ﬂ  ligature "fl"
+  7        ->       ¶  pilcrow              ‡  double dagger
+  8        ->       •  bullet               °  degree sign
+  9        ->       ª  feminine ordinal     ·  middle dot
+  0        ->       º  masculine ordinal    ‚  single low-9 quote
+  -        ->       –  en dash              —  em dash
+  =        ->       ≠  not equal to         ±  plus-minus
+  [        ->       "  left double quote    "  right double quote
+  ]        ->       '  left single quote    '  right single quote
+  \        ->       «  left guillemet       »  right guillemet
+  ;        ->       …  ellipsis             Ú  capital U with acute
+  '        ->       æ  ae ligature          Æ  capital AE ligature
+  ,        ->       ≤  less than or equal   ¯  macron
+  .        ->       ≥  greater than/equal   ˘  breve
+  /        ->       ÷  division sign        ¿  inverted "?"
+
+
+================================================================================
+4. MAC — COMMAND (⌘) KEY SHORTCUTS, A–Z   [these are ACTIONS, not characters]
+================================================================================
+  A -> Select All        B -> Bold               C -> Copy
+  D -> Duplicate*        E -> Use Selection*      F -> Find
+  G -> Find Next         H -> Hide App            I -> Get Info / Italic*
+  J -> varies by app     K -> Insert Link*        L -> varies by app
+  M -> Minimize Window   N -> New                 O -> Open
+  P -> Print             Q -> Quit App            R -> Refresh / Reply*
+  S -> Save              T -> New Tab             U -> varies by app
+  V -> Paste             W -> Close Window        X -> Cut
+  Y -> varies by app     Z -> Undo
+  * = meaning changes depending on the app (Finder vs. Mail vs. a browser, etc.)
+
+
+================================================================================
+5. MAC — CONTROL (⌃) KEY
+================================================================================
+Common Control shortcuts (system-wide):
+  Control + click              -> Right-click / contextual menu
+  Control + Command + Space    -> Emoji & Symbols viewer (Character Viewer)
+  Control + Command + Q        -> Lock screen
+  Control + Eject              -> Restart/Sleep/Shut Down dialog
+
+Control + letter in Terminal / text consoles — this is the one place a
+modifier key genuinely sends a distinct code per letter (classic ASCII
+control codes, still used by bash/zsh, vim, nano, etc.):
+
+  A -> Beginning of line        B -> Back one character
+  C -> Interrupt / cancel (^C)  D -> Delete char / end of input (EOF)
+  E -> End of line              F -> Forward one character
+  G -> Bell                     H -> Backspace
+  I -> Tab                      J -> Line feed
+  K -> Kill text to end of line L -> Clear screen
+  M -> Carriage return / Enter  N -> Next line (history)
+  O -> (rarely used)            P -> Previous line (history)
+  Q -> Resume output (XON)      R -> Reverse-search history
+  S -> Pause output (XOFF)      T -> Transpose characters
+  U -> Kill line backward       V -> Insert next character literally
+  W -> Delete word backward     X -> Cancel
+  Y -> Yank (paste killed text) Z -> Suspend process (^Z)
+
+
+================================================================================
+6. MAC — FN KEY
+================================================================================
+Fn does not combine with letters to make characters. What it actually does:
+  Fn + F1...F12   -> Toggles the top row between brightness/volume/media
+                      controls and standard F1–F12 function keys
+  Fn + Delete     -> Forward delete (deletes the character ahead of cursor)
+  Fn + Up Arrow   -> Page Up
+  Fn + Down Arrow -> Page Down
+  Fn + Left Arrow -> Home
+  Fn + Right Arrow-> End
+  Fn (tap, on newer keyboards with a Globe/🌐 key) -> Opens Emoji picker
+
+
+================================================================================
+7. WINDOWS — ALT + NUMPAD CODES FOR ACCENTED LETTERS, A–Z
+================================================================================
+Hold Alt, type the digits on the NUMERIC KEYPAD (include the leading 0),
+release Alt. Requires a physical numpad, or Fn+NumLock on laptops.
+
+  A -> 0192 À  0193 Á  0194 Â  0195 Ã  0196 Ä  0197 Å
+       0224 à  0225 á  0226 â  0227 ã  0228 ä  0229 å
+  Æ -> 0198 Æ  |  0230 æ
+  C -> 0199 Ç  |  0231 ç
+  E -> 0200 È  0201 É  0202 Ê  0203 Ë
+       0232 è  0233 é  0234 ê  0235 ë
+  I -> 0204 Ì  0205 Í  0206 Î  0207 Ï
+       0236 ì  0237 í  0238 î  0239 ï
+  N -> 0209 Ñ  |  0241 ñ
+  O -> 0210 Ò  0211 Ó  0212 Ô  0213 Õ  0214 Ö  0216 Ø
+       0242 ò  0243 ó  0244 ô  0245 õ  0246 ö  0248 ø
+  S -> 0223 ß  (German sharp s, lowercase only)
+  U -> 0217 Ù  0218 Ú  0219 Û  0220 Ü
+       0249 ù  0250 ú  0251 û  0252 ü
+  Y -> 0221 Ý  |  0253 ý  0255 ÿ
+
+
+================================================================================
+8. WINDOWS — ALT + NUMPAD CODES FOR COMMON SYMBOLS
+================================================================================
+These use the leading-zero (Windows-1252 / ANSI) codes — reliable in Word,
+browsers, and most modern apps:
+
+  Trademark ™        0153        Copyright ©         0169
+  Registered ®       0174        Section §           0167
+  Pilcrow ¶          0182        Bullet •            0149
+  Degree °           0176        Plus-minus ±        0177
+  Euro €             0128        Pound £             0163
+  Cent ¢             0162        Yen ¥               0165
+  Micro/mu µ         0181        Per mille ‰         0137
+  Dagger †           0134        Double dagger ‡     0135
+  Ellipsis …         0133        En dash –           0150
+  Em dash —          0151        One quarter ¼       0188
+  One half ½         0189        Three quarters ¾    0190
+  Superscript 2 ²    0178        Superscript 3 ³     0179
+  Left guillemet «   0171        Right guillemet »   0187
+  Left double quote "  0147      Right double quote "  0148
+  Left single quote '  0145      Right single quote '  0146
+  Feminine ordinal ª 0170        Masculine ordinal º 0186
+  Inverted "!" ¡     0161        Inverted "?" ¿      0191
+
+Math / Greek symbols NOT in the Windows-1252 set above — these use the
+older, no-leading-zero DOS/CP437 codes instead (works reliably in Notepad;
+support varies in newer apps):
+
+  Division ÷    246       Almost equal ≈   247
+  Less/equal ≤  243       Greater/equal ≥  242
+  Square root √ 251       Infinity ∞       236
+  Omega Ω       234       Pi (lowercase) π 227
+  Sigma (cap) Σ 228
+
+Symbols with NO simple Alt+numpad code in either set (∆, ≠, ∫, ∂, ∏, ∑, √,
+≈, ∞ as proper Unicode math glyphs) — in Microsoft Word, type the hex code
+below then press Alt+X immediately after, and it converts to the symbol:
+
+  Not equal ≠        type 2260 then Alt+X
+  Increment ∆        type 2206 then Alt+X
+  Integral ∫         type 222B then Alt+X
+  Partial ∂          type 2202 then Alt+X
+  N-ary product ∏    type 220F then Alt+X
+  N-ary summation ∑  type 2211 then Alt+X
+  Square root √      type 221A then Alt+X
+  Almost equal ≈     type 2248 then Alt+X
+  Infinity ∞         type 221E then Alt+X
+
+Outside Word: use Character Map (search "charmap" in the Start menu) to
+find and copy any of these instead.
+
+
+================================================================================
+9. WINDOWS — CTRL KEY SHORTCUTS, A–Z   [these are ACTIONS, not characters]
+================================================================================
+  A -> Select All         B -> Bold                C -> Copy
+  D -> Bookmark*          E -> Center text*         F -> Find
+  G -> Find Next / Go To  H -> Replace              I -> Italic
+  J -> Downloads*         K -> Insert Hyperlink     L -> Address bar*
+  M -> varies by app      N -> New                  O -> Open
+  P -> Print              Q -> varies by app         R -> Refresh*
+  S -> Save               T -> New Tab              U -> Underline
+  V -> Paste              W -> Close Tab/Window     X -> Cut
+  Y -> Redo               Z -> Undo
+  * = meaning changes depending on the app
+
+
+================================================================================
+10. WINDOWS — WIN (⊞) KEY SHORTCUTS, A–Z   [Windows 10/11 — may vary by version]
+================================================================================
+  A -> Quick Settings / Action Center      B -> Focus system tray
+  C -> No default action (was Cortana)     D -> Show/hide Desktop
+  E -> File Explorer                       F -> Feedback Hub
+  G -> Xbox Game Bar                       H -> Voice typing / dictation
+  I -> Settings                            J -> rarely used
+  K -> Cast / Connect                      L -> Lock screen
+  M -> Minimize all windows                N -> varies by setup
+  O -> Rotation lock (tablets)             P -> Project / display mode
+  Q -> Search                              R -> Run dialog
+  S -> Search                              T -> Cycle taskbar apps
+  U -> Accessibility settings              V -> Clipboard history
+  X -> Quick Link (power user) menu        Z -> Snap layouts (Windows 11)
+
+
+================================================================================
+11. NOTES & CAVEATS
+================================================================================
+- Mac Option/Shift+Option combos above are for the U.S. keyboard layout.
+  Other layouts (ABC Extended, International, etc.) place characters
+  differently. To see YOUR layout live: System Settings > Keyboard >
+  turn on "Show Input menu in menu bar" > menu bar icon > Show Keyboard
+  Viewer, then hold Option (and Option+Shift) to watch the keys change.
+- Windows Alt+numpad codes need a physical numeric keypad, or NumLock +
+  Fn on laptops without one. They don't work over some remote-desktop
+  sessions or in a handful of apps (notably some UWP/Store apps).
+- Don't mix up the two Windows code pages: codes WITH a leading zero
+  (e.g. 0163) use Windows-1252/ANSI; codes WITHOUT one (e.g. 163 alone)
+  use the older DOS/CP437 set and can produce a different character.
+- On international Windows keyboards (UK, EU, etc.), Ctrl+Alt (or the
+  AltGr key) + a letter can also type accented/special characters
+  directly (e.g. Ctrl+Alt+E = € on many EU layouts) — this depends on
+  the keyboard layout selected and doesn't apply to a standard US layout.
+- For anything not covered above: Mac's Character Viewer (Control+
+  Command+Space) and Windows' Character Map (charmap.exe) both let you
+  search by name and copy any Unicode character.
+
+================================================================================
+End of file.
+================================================================================
