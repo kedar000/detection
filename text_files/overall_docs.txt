@@ -306,3 +306,463 @@ questions can be added using the same session/question/event structure.
 
 Additional selection-specific events and features can then be introduced without
 changing the core behavioral event architecture.
+
+
+first iteration model approch 
+
+                ┌───────────────────┐
+                │ Frontend events   │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                ┌───────────────────┐
+                │ Event Encoding    │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                ┌───────────────────┐
+                │ Event Embedding   │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                ┌───────────────────┐
+                │       GRU         │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                ┌───────────────────┐
+                │ Dense + Sigmoid   │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                    Risk Score
+                     0.00–1.00
+
+
+AI Overlay Detection — Initial ML Model Design
+================================================
+
+1. Problem Definition
+---------------------
+
+The frontend collects behavioral events generated while a candidate is taking a written test.
+
+The first ML prototype will treat a sequence of behavioral events as one training sample.
+
+Example:
+
+Event 1 → Event 2 → Event 3 → ... → Event N
+
+The model will analyze the complete sequence and generate a risk score representing how suspicious the observed behavior is.
+
+For the first version, mouse-movement events are excluded.
+
+
+2. Why a Sequence Model
+-----------------------
+
+The order and timing of behavioral events are important.
+
+The model should not evaluate events independently. The same event can have different meanings depending on what happened before and after it.
+
+For example:
+
+Normal:
+
+KEY_DOWN → KEY_UP → KEY_DOWN → KEY_UP
+
+Potentially more suspicious pattern:
+
+KEY_DOWN → KEY_UP → BLUR → FOCUS → COMMAND_DOWN → "/"_DOWN → "/"_UP → COMMAND_UP
+
+The goal is therefore to learn behavioral patterns across a sequence rather than only aggregate counts.
+
+A sequence model can learn:
+
+- Event order
+- Repeated event patterns
+- Event combinations
+- Temporal relationships
+- Changes in behavior over a sequence
+- Context surrounding potentially suspicious events
+
+This matches the intended input to the system:
+
+Frontend event stream → ordered sequence → ML model → risk score.
+
+
+3. Why GRU
+----------
+
+The first sequence model selected for the prototype is GRU (Gated Recurrent Unit).
+
+GRU is appropriate because it is designed to process sequential data while maintaining information about previous events.
+
+Reasons for selecting GRU for the first prototype:
+
+1. It directly supports sequential event data.
+2. It can learn dependencies between earlier and later events.
+3. It is simpler and lighter than a Transformer.
+4. It generally requires less data and computational complexity than a large Transformer.
+5. It is easier to prototype and debug.
+6. It provides a strong starting point for later comparison with LSTM or Transformer models.
+
+The project is starting with a dataset that must be created from scratch. Therefore, a simpler sequence model is preferred initially instead of starting with a Transformer.
+
+LSTM remains a possible comparison model later. Transformer can be evaluated after sufficient real training data is available.
+
+XGBoost/Random Forest may also be used as non-sequential baselines, but they are not the primary model because the main requirement is to learn from event order and sequence.
+
+
+4. Initial Model Pipeline
+-------------------------
+
+The initial architecture is:
+
+Event Encoding
+      ↓
+Event Embedding
+      ↓
+GRU
+      ↓
+Dense Layer
+      ↓
+Sigmoid
+      ↓
+Risk Score
+
+
+4.1 Event Encoding
+------------------
+
+Frontend events are converted into a machine-readable representation.
+
+The neural network cannot directly process event names such as:
+
+KEY_DOWN
+KEY_UP
+BLUR
+FOCUS
+ANSWER_LENGTH_ANOMALY
+
+Therefore, event types will be encoded into IDs or another numerical representation.
+
+Example:
+
+KEY_DOWN               → 1
+KEY_UP                 → 2
+BLUR                   → 3
+FOCUS                  → 4
+ANSWER_LENGTH_ANOMALY  → 5
+
+The exact encoding scheme will be finalized during dataset design.
+
+
+4.2 Event Embedding
+-------------------
+
+Encoded event IDs are converted into learned vector representations.
+
+Example conceptually:
+
+KEY_DOWN → [vector]
+KEY_UP   → [vector]
+BLUR     → [vector]
+FOCUS    → [vector]
+
+The embedding allows the model to learn relationships between different event types.
+
+The embedding layer is provided by the ML framework and does not need to be implemented manually.
+
+
+4.3 GRU
+-------
+
+The event embeddings are passed to the GRU in chronological order.
+
+Conceptually:
+
+Event 1 → GRU → hidden state 1
+Event 2 → GRU → hidden state 2
+Event 3 → GRU → hidden state 3
+...
+Event N → GRU → final hidden state
+
+The GRU maintains internal state while processing the sequence. Its gates and internal mathematical operations are handled by the ML framework.
+
+The final GRU representation is used to classify the overall sequence.
+
+
+4.4 Dense Layer
+---------------
+
+The final GRU representation is passed to a Dense (fully connected) layer.
+
+The Dense layer converts the learned sequence representation into a value that can be used for classification.
+
+
+4.5 Sigmoid
+-----------
+
+A sigmoid activation converts the final model output into a value between 0 and 1.
+
+Example:
+
+0.05 → low risk
+0.30 → relatively low risk
+0.60 → elevated risk
+0.85 → high risk
+
+This value will be treated as the model's risk score.
+
+Important: the score is not inherently proof of cheating. It represents the model's learned assessment of suspicious behavior and must be calibrated and evaluated using validation data.
+
+
+5. Final Output
+---------------
+
+The initial model output will be:
+
+risk_score ∈ [0, 1]
+
+Example:
+
+{
+    "risk_score": 0.82
+}
+
+The threshold for actions such as warning, review, or escalation will be decided separately after model evaluation.
+
+The ML model itself should not directly label a candidate as "cheating" based only on the raw score.
+
+
+6. Event Structure
+------------------
+
+The model will receive behavioral events generated by the frontend.
+
+The events are ordered chronologically.
+
+The first version focuses on:
+
+- Keyboard key down
+- Keyboard key up
+- Answer-length anomaly
+- Focus
+- Blur
+- Other finalized behavioral events as they are added
+
+Mouse movement is excluded from the first version.
+
+The conceptual event sequence can look like:
+
+KEY_DOWN(k)
+KEY_UP(k)
+KEY_UP(e)
+KEY_DOWN(e)
+ANSWER_LENGTH_ANOMALY
+KEY_UP(r)
+BLUR
+KEY_DOWN(r)
+KEY_DOWN(COMMAND)
+KEY_DOWN("/")
+KEY_UP("/")
+KEY_UP(COMMAND)
+...
+
+
+7. Answer-Length Anomaly Event
+------------------------------
+
+Answer length will NOT be sent to the model after every keystroke.
+
+The frontend will derive an anomaly event when the observed answer-length change is disproportionately large compared with the number of relevant keystrokes.
+
+Example:
+
+2 keystrokes
+Answer length changes from 10 to 110
+Change = +100
+
+This can generate:
+
+ANSWER_LENGTH_ANOMALY
+
+The event can carry numerical information such as the answer-length delta and the number of relevant keystrokes.
+
+Example conceptual structure:
+
+{
+    "type": "ANSWER_LENGTH_ANOMALY",
+    "length_delta": 100,
+    "keystroke_count": 2
+}
+
+The exact threshold and fields will be finalized during event-schema and dataset design.
+
+The purpose is to avoid sending normal answer-length changes for every individual keystroke and instead send a higher-level behavioral signal when a disproportionate change is detected.
+
+
+8. Potentially Suspicious Keystrokes
+------------------------------------
+
+Certain keys such as Command, Control, and Option can be assigned an initial suspicion/prior value.
+
+These keys are not inherently cheating events.
+
+Instead, they are considered potentially relevant behavioral signals.
+
+Example conceptual values:
+
+COMMAND → prior suspicion value
+CONTROL → prior suspicion value
+OPTION  → prior suspicion value
+
+A normal typing key may have:
+
+A → prior suspicion value = 0
+
+The prior value is NOT the final risk score and does not mean that pressing the key is cheating.
+
+The purpose is to give the model additional information that certain events may be more behaviorally relevant.
+
+The model should ultimately learn the importance of these events from training data and their surrounding context.
+
+For example:
+
+COMMAND
+
+may be relatively insignificant by itself, while:
+
+COMMAND_DOWN
+"/"_DOWN
+"/"_UP
+COMMAND_UP
+BLUR
+FOCUS
+ANSWER_LENGTH_ANOMALY
+
+may form a stronger sequence-level signal.
+
+
+9. Training Sample Definition
+-----------------------------
+
+One training sample is a sequence of frontend-generated behavioral events.
+
+Conceptually:
+
+Sample 1:
+[
+    EVENT_1,
+    EVENT_2,
+    EVENT_3,
+    ...
+    EVENT_N
+]
+→ label
+
+Sample 2:
+[
+    EVENT_1,
+    EVENT_2,
+    EVENT_3,
+    ...
+    EVENT_N
+]
+→ label
+
+The label will indicate the training target, such as normal or suspicious behavior.
+
+The exact labeling strategy will be defined when the dataset-generation process is designed.
+
+
+10. Runtime Flow
+----------------
+
+During a test:
+
+Frontend
+   ↓
+Behavioral events
+   ↓
+Event preprocessing
+   ↓
+Event sequence/window
+   ↓
+Event encoding
+   ↓
+Event embedding
+   ↓
+GRU
+   ↓
+Dense
+   ↓
+Sigmoid
+   ↓
+Risk score
+
+
+Example:
+
+100 behavioral events
+        ↓
+      GRU
+        ↓
+Risk Score = 0.78
+
+
+11. Important Design Principle
+------------------------------
+
+The model should learn from the sequence, not from a manually written rule saying that one particular event equals cheating.
+
+Individual events can be given prior behavioral relevance, but the final score should be learned from combinations and sequences of events.
+
+The intended progression is:
+
+Individual events
+      ↓
+Event combinations
+      ↓
+Temporal patterns
+      ↓
+Sequence representation
+      ↓
+Risk score
+
+
+12. Current Model Decision
+--------------------------
+
+FINALIZED FOR PROTOTYPE:
+
+Model:
+GRU sequence classifier
+
+Architecture:
+Event Encoding
+→ Event Embedding
+→ GRU
+→ Dense
+→ Sigmoid
+
+Output:
+Risk score from 0 to 1
+
+Primary training sample:
+A chronological sequence of frontend-generated behavioral events
+
+Current scope:
+Written-answer behavioral detection
+
+Excluded for first version:
+Mouse movement
+
+Future model comparisons:
+- LSTM
+- Transformer
+- XGBoost / Random Forest baseline
+- Possible anomaly-detection approach
+
+The next major design task is to finalize the exact numerical representation of each event and then define how the training dataset will be generated from scratch.
