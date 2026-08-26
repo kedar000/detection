@@ -86,3 +86,80 @@ app.listen(PORT, () => {
 
   console.log(`Screenshots directory: ${captureDirectory}`);
 });
+
+
+
+
+
+// {
+//   session_id: "",
+//   question_id :"",
+//   blur_count:"",
+//   answer_length:"0",
+//   question_timing:"question_opened",
+//   event : {
+//     type : "",
+//     key : ""
+//   },
+//   timestamps:""
+// }
+// {
+//   session_id: "",
+//   question_id :"",
+//   blur_count:"",
+//   answer_length:"0",
+//   question_timing:"question_opened",
+//   event : {
+//     type : "",
+//     key : ""
+//   },
+//   timestamps:""
+// }
+// {
+//   session_id: "",
+//   question_id :"",
+//   blur_count:"",
+//   answer_length:"1",
+//   question_timing:"typing_started",
+//   event : {
+//     type : "keydown",
+//     key : "k"
+//   },
+//   timestamps:""
+// }
+// {
+//   session_id: "",
+//   question_id :"",
+//   blur_count:"",
+//   answer_length:"1",
+//   question_timing:"typing_started",
+//   event : {
+//     type : "keyup",
+//     key : "k"
+//   },
+//   timestamps:""
+// }
+// {
+//   session_id: "",
+//   question_id :"",
+//   blur_count:"1",
+//   answer_length:"1",
+//   question_timing:"typing_stopped",
+//   event : {
+//     type : "",
+//     key : ""
+//   },
+//   timestamps:""
+// }
+// {
+//   session_id: "",
+//   question_id :"",
+//   blur_count:"1",
+//   answer_length:"1",
+//   question_timing:"question_closed",
+//   event : {
+//     type : "",
+//     key : ""
+//   },
+//   timestamps:""
+// }
