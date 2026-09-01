@@ -448,3 +448,118 @@ print("\nAccuracy :", f"{accuracy:.4f}")
 print("Precision:", f"{precision:.4f}")
 print("Recall   :", f"{recall:.4f}")
 print("F1 Score :", f"{f1:.4f}")
+
+
+# ============================================================
+# 18. SAVE FINAL TEST RESULTS TO FILE
+# ============================================================
+
+result_file = "../keystroke_dataset/gru_final_test_results.txt"
+
+
+with open(result_file, "w", encoding="utf-8") as file:
+
+    file.write("================================================\n")
+    file.write("GRU FINAL TEST RESULTS\n")
+    file.write("================================================\n\n")
+
+    # Dataset information
+    file.write(
+        f"Total final test samples : {len(y_final)}\n"
+    )
+
+    file.write(
+        f"Correct predictions      : {(y_final == predictions).sum()}\n"
+    )
+
+    file.write(
+        f"Incorrect predictions    : {(y_final != predictions).sum()}\n"
+    )
+
+    file.write("\n")
+
+    # Metrics
+    file.write("Metrics:\n")
+    file.write(
+        f"Accuracy  : {accuracy:.4f}\n"
+    )
+    file.write(
+        f"Precision : {precision:.4f}\n"
+    )
+    file.write(
+        f"Recall    : {recall:.4f}\n"
+    )
+    file.write(
+        f"F1 Score  : {f1:.4f}\n"
+    )
+
+    file.write("\n")
+
+    # Confusion matrix
+    file.write("================================================\n")
+    file.write("CONFUSION MATRIX\n")
+    file.write("================================================\n\n")
+
+    file.write(
+        str(cm)
+    )
+
+    file.write("\n\n")
+
+    # Classification report
+    file.write("================================================\n")
+    file.write("CLASSIFICATION REPORT\n")
+    file.write("================================================\n\n")
+
+    file.write(
+        classification_report(
+            y_final,
+            predictions,
+            target_names=[
+                "Normal (0)",
+                "Cheating (1)"
+            ],
+            zero_division=0
+        )
+    )
+
+    # Individual predictions
+    file.write("\n================================================\n")
+    file.write("INDIVIDUAL PREDICTIONS\n")
+    file.write("================================================\n\n")
+
+    for i in range(len(final_test_df)):
+
+        probability = float(
+            probabilities[i][0]
+        )
+
+        predicted_label = predictions[i]
+        actual_label = y_final[i]
+
+        predicted_class = (
+            "CHEATING"
+            if predicted_label == 1
+            else "NORMAL"
+        )
+
+        actual_class = (
+            "CHEATING"
+            if actual_label == 1
+            else "NORMAL"
+        )
+
+        file.write(
+            f"Sample {i + 1:3} | "
+            f"Actual: {actual_class:8} | "
+            f"Predicted: {predicted_class:8} | "
+            f"Probability: {probability:.4f}\n"
+        )
+
+
+print("\n================================================")
+print("RESULTS SAVED")
+print("================================================")
+
+print("Results saved to:")
+print(result_file)
