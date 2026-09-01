@@ -1,32 +1,56 @@
 """
-GRU Dataset Preprocessing
-=========================
+============================================================
+CURRENT SCRIPT SUMMARY
+============================================================
 
-Purpose:
-    Prepare the keystroke event CSV files for GRU model training.
+This script prepares the training and validation datasets
+for the GRU model.
 
-This script:
-    1. Loads the training and test CSV files.
-    2. Splits each input sequence using "|" as the event separator.
-    3. Creates a fixed vocabulary for all supported keyboard events.
-    4. Creates IDs for special application events.
-    5. Reserves:
-           <PAD> = 0
-           <UNK> = 1
-    6. Converts event sequences into integer ID sequences.
-    7. Uses the same fixed vocabulary for both training and test data.
-    8. Reports events that are not present in the vocabulary.
-    9. Does NOT remove rows containing unknown events.
+Data flow:
 
-The output of this step is:
-    train_df["events"]
-    train_df["event_ids"]
+    training_dataset.csv
+            ↓
+        train_df
+            ↓
+    Split into events
+            ↓
+    Fixed vocabulary
+            ↓
+    Events converted to integer IDs
+            ↓
+    Remove rows containing unknown events
+            ↓
+    Pad sequences to MAX_LENGTH = 3000
+            ↓
+        X_train, y_train
 
-    test_df["events"]
-    test_df["event_ids"]
 
-The GRU is NOT trained in this script.
-The next step will be sequence padding.
+    test_dataset_training.csv
+            ↓
+         test_df
+            ↓
+    Same preprocessing
+            ↓
+        X_test, y_test
+
+The test_use_for_final.csv file is NOT used in this script.
+It will be loaded separately after the GRU model has been
+completely trained for the final evaluation.
+
+At the end of this script:
+
+    X_train → padded training sequences
+    y_train → training labels
+
+    X_test  → padded validation sequences
+    y_test  → validation labels
+
+The GRU model has NOT been created or trained yet.
+
+NEXT STEP:
+    Build and configure the GRU model using X_train/y_train
+    and validate it using X_test/y_test.
+============================================================
 """
 
 import pandas as pd
@@ -580,3 +604,244 @@ print("\nOriginal sequence length:",
 
 print("Padded sequence length:",
       len(X_train[0]))
+# ============================================================
+# 20. BUILD GRU MODEL
+# ============================================================
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Embedding, GRU, Dense, Dropout
+
+
+VOCAB_SIZE = len(event_to_id)
+EMBEDDING_DIM = 64
+GRU_UNITS = 64
+
+
+model = Sequential([
+
+    Embedding(
+        input_dim=VOCAB_SIZE,
+        output_dim=EMBEDDING_DIM,
+        mask_zero=True,
+        input_shape=(MAX_LENGTH,)
+    ),
+
+    GRU(
+        GRU_UNITS
+    ),
+
+    Dropout(0.3),
+
+    Dense(
+        32,
+        activation="relu"
+    ),
+
+    Dropout(0.2),
+
+    Dense(
+        1,
+        activation="sigmoid"
+    )
+])
+
+
+# ============================================================
+# 21. COMPILE MODEL
+# ============================================================
+
+model.compile(
+    optimizer="adam",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+
+# ============================================================
+# 22. DISPLAY MODEL
+# ============================================================
+
+print("\n================================================")
+print("GRU MODEL")
+print("================================================")
+
+model.summary()
+
+# ============================================================
+# 23. TRAIN THE GRU MODEL
+# ============================================================
+
+from tensorflow.keras.callbacks import EarlyStopping
+
+
+early_stopping = EarlyStopping(
+    monitor="val_loss",
+    patience=5,
+    restore_best_weights=True
+)
+
+
+print("\n================================================")
+print("STARTING GRU TRAINING")
+print("================================================")
+
+
+history = model.fit(
+    X_train,
+    y_train,
+
+    validation_data=(
+        X_test,
+        y_test
+    ),
+
+    epochs=30,
+    batch_size=16,
+
+    callbacks=[
+        early_stopping
+    ],
+
+    verbose=1
+)
+
+# ============================================================
+# SAVE TRAINED MODEL
+# ============================================================
+
+model_path = "../keystroke_dataset/gru_overlay_detection.keras"
+
+model.save(model_path)
+
+print("\nTrained model saved to:")
+print(model_path)
+
+# ============================================================
+# 24. EVALUATE MODEL ON VALIDATION DATA
+# ============================================================
+
+print("\n================================================")
+print("VALIDATION EVALUATION")
+print("================================================")
+
+val_loss, val_accuracy = model.evaluate(
+    X_test,
+    y_test,
+    verbose=1
+)
+
+print("\nValidation Loss    :", val_loss)
+print("Validation Accuracy:", val_accuracy)
+
+# ============================================================
+# 25. SAVE BEST MODEL
+# ============================================================
+
+best_model_path = "../keystroke_dataset/gru_overlay_detection_best.keras"
+
+model.save(best_model_path)
+
+print("\nBest model saved to:")
+print(best_model_path)
+
+# ============================================================
+# 26. CONFUSION MATRIX + PRECISION + RECALL + F1-SCORE
+# ============================================================
+
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    precision_score,
+    recall_score,
+    f1_score
+)
+
+
+print("\n================================================")
+print("VALIDATION METRICS")
+print("================================================")
+
+
+# ------------------------------------------------------------
+# Generate predictions
+# ------------------------------------------------------------
+
+y_val_probability = model.predict(
+    X_test,
+    verbose=0
+)
+
+
+# Convert probabilities to 0/1
+y_val_pred = (
+    y_val_probability >= 0.5
+).astype(int).flatten()
+
+
+# ------------------------------------------------------------
+# Confusion Matrix
+# ------------------------------------------------------------
+
+cm = confusion_matrix(
+    y_test,
+    y_val_pred
+)
+
+print("\nConfusion Matrix:")
+print(cm)
+
+
+# ------------------------------------------------------------
+# Precision
+# ------------------------------------------------------------
+
+precision = precision_score(
+    y_test,
+    y_val_pred,
+    zero_division=0
+)
+
+
+# ------------------------------------------------------------
+# Recall
+# ------------------------------------------------------------
+
+recall = recall_score(
+    y_test,
+    y_val_pred,
+    zero_division=0
+)
+
+
+# ------------------------------------------------------------
+# F1 Score
+# ------------------------------------------------------------
+
+f1 = f1_score(
+    y_test,
+    y_val_pred,
+    zero_division=0
+)
+
+
+print("\nPrecision :", precision)
+print("Recall    :", recall)
+print("F1 Score  :", f1)
+
+
+# ------------------------------------------------------------
+# Complete classification report
+# ------------------------------------------------------------
+
+print("\nClassification Report:")
+print(
+    classification_report(
+        y_test,
+        y_val_pred,
+        target_names=[
+            "Normal (0)",
+            "Cheating (1)"
+        ],
+        zero_division=0
+    )
+)
