@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Keystroke Event Logger</title>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #222;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .meta {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    font-size: 15px;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical;
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: #888;
+  }
+
+  .stats {
+    display: flex;
+    gap: 25px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: #444;
+  }
+
+  .stats b {
+    color: #000;
+  }
+
+  .actions {
+    margin: 12px 0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 8px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #f7f7f7;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  button:hover {
+    background: #eee;
+  }
+
+  /* Active toggle button */
+  #toggleViewBtn {
+    background: #222;
+    color: white;
+    border-color: #222;
+  }
+
+  #toggleViewBtn:hover {
+    background: #444;
+  }
+
+
+  /* ============================================================
+     COMMON LOG CONTAINER
+     ============================================================ */
+
+  #log {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    border-radius: 6px;
+    height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+
+  /* ============================================================
+     TABLE VIEW
+     ============================================================ */
+
+  #tableView {
+    min-width: 750px;
+  }
+
+  .log-header,
+  .log-row {
+    display: grid;
+
+    grid-template-columns:
+      115px
+      130px
+      140px
+      90px
+      100px
+      1fr;
+
+    gap: 10px;
+
+    align-items: center;
+
+    padding: 8px 12px;
+
+    box-sizing: border-box;
+  }
+
+  .log-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    background: #161b22;
+
+    color: #8b949e;
+
+    font-weight: bold;
+
+    border-bottom: 1px solid #30363d;
+  }
+
+  .log-row {
+    border-bottom: 1px solid #21262d;
+  }
+
+  .log-row:hover {
+    background: #161b22;
+  }
+
+  .time-value {
+    color: #8b949e;
+  }
+
+  .event-keydown {
+    color: #58a6ff;
+    font-weight: 600;
+  }
+
+  .event-keyup {
+    color: #79c0ff;
+    font-weight: 600;
+  }
+
+  .event-focus {
+    color: #f0883e;
+    font-weight: 600;
+  }
+
+  .key-value {
+    color: #f0f6fc;
+    font-weight: 600;
+  }
+
+  .value {
+    color: #c9d1d9;
+  }
+
+
+  /* ============================================================
+     RAW JSON VIEW
+     ============================================================ */
+
+  #jsonView {
+    display: none;
+
+    padding: 14px;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    min-height: 100%;
+    box-sizing: border-box;
+  }
+
+  .json-line {
+    margin-bottom: 4px;
+    padding: 4px 6px;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .json-line:hover {
+    background: #161b22;
+  }
+
+
+  /* ============================================================
+     EMPTY MESSAGE
+     ============================================================ */
+
+  .empty-log {
+    color: #6e7681;
+    text-align: center;
+    padding: 30px;
+  }
+
+
+  /* ============================================================
+     EVENT SUMMARY
+     ============================================================ */
+
+  .event-summary {
+    margin-top: 12px;
+    padding: 10px 12px;
+
+    background: #f6f8fa;
+
+    border: 1px solid #ddd;
+
+    border-radius: 6px;
+
+    font-size: 12px;
+
+    color: #555;
+  }
+
+</style>
+</head>
+
+
+<body>
+
+<h1>Keystroke Event Logger</h1>
+
+<div class="meta">
+  Type in the box below. Every <code>keydown</code> and <code>keyup</code>
+  event is logged. Switching tabs, minimizing, or leaving the textarea
+  logs a <code>focus_change</code> event.
+</div>
+
+
+<textarea
+  id="answerBox"
+  placeholder="Start typing..."
+></textarea>
+
+
+<div class="stats">
+
+  <div>
+    Length: <b id="lenStat">0</b>
+  </div>
+
+  <div>
+    Blur count: <b id="blurStat">0</b>
+  </div>
+
+  <div>
+    Events logged: <b id="eventStat">0</b>
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     BUTTONS
+     ============================================================ -->
+
+<div class="actions">
+
+  <button id="downloadBtn">
+    Download JSON
+  </button>
+
+  <button id="copyBtn">
+    Copy JSON
+  </button>
+
+  <button id="clearBtn">
+    Clear Log
+  </button>
+
+  <button id="toggleViewBtn">
+    Switch to JSON View
+  </button>
+
+</div>
+
+
+<!-- ============================================================
+     LOG CONTAINER
+     ============================================================ -->
+
+<div id="log">
+
+
+  <!-- ==========================================================
+       TABLE VIEW
+       ========================================================== -->
+
+  <div id="tableView">
+
+    <div class="log-header">
+
+      <div>Time</div>
+
+      <div>Event</div>
+
+      <div>Key</div>
+
+      <div>Length</div>
+
+      <div>Blur Count</div>
+
+      <div>Details</div>
+
+    </div>
+
+
+    <div
+      id="emptyTableLog"
+      class="empty-log"
+    >
+      No events yet. Start typing...
+    </div>
+
+  </div>
+
+
+  <!-- ==========================================================
+       RAW JSON VIEW
+       ========================================================== -->
+
+  <div id="jsonView">
+
+    <div
+      id="emptyJsonLog"
+      class="empty-log"
+    >
+      No events yet. Start typing...
+    </div>
+
+  </div>
+
+
+</div>
+
+
+<div class="event-summary">
+
+  <b>Current view:</b>
+  <span id="viewStatus">Table View</span>
+
+</div>
+
+
+<script>
+
+(function () {
+
+
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+
+  const SESSION_ID = "session_001";
+
+  const QUESTION_ID = "q_01";
+
+
+  // ============================================================
+  // DOM ELEMENTS
+  // ============================================================
+
+  const textarea =
+    document.getElementById("answerBox");
+
+
+  const tableView =
+    document.getElementById("tableView");
+
+
+  const jsonView =
+    document.getElementById("jsonView");
+
+
+  const emptyTableLog =
+    document.getElementById("emptyTableLog");
+
+
+  const emptyJsonLog =
+    document.getElementById("emptyJsonLog");
+
+
+  const lenStat =
+    document.getElementById("lenStat");
+
+
+  const blurStat =
+    document.getElementById("blurStat");
+
+
+  const eventStat =
+    document.getElementById("eventStat");
+
+
+  const downloadBtn =
+    document.getElementById("downloadBtn");
+
+
+  const copyBtn =
+    document.getElementById("copyBtn");
+
+
+  const clearBtn =
+    document.getElementById("clearBtn");
+
+
+  const toggleViewBtn =
+    document.getElementById("toggleViewBtn");
+
+
+  const viewStatus =
+    document.getElementById("viewStatus");
+
+
+  // ============================================================
+  // VARIABLES
+  // ============================================================
+
+  let blurCount = 0;
+
+  const events = [];
+
+  let currentView = "table";
+
+
+  // ============================================================
+  // GET CURRENT ANSWER LENGTH
+  // ============================================================
+
+  function currentLength() {
+
+    return textarea.value.length;
+
+  }
+
+
+  // ============================================================
+  // LOG EVENT
+  // ============================================================
+
+  function logEvent(eventPayload) {
+
+
+    const entry = {
+
+      session_id: SESSION_ID,
+
+      question_id: QUESTION_ID,
+
+      timestamp: Date.now(),
+
+      answer_length: currentLength(),
+
+      blur_count: blurCount,
+
+      event: eventPayload
+
+    };
+
+
+    events.push(entry);
+
+
+    renderTableEntry(entry);
+
+    renderJsonEntry(entry);
+
+
+    updateStats();
+
+
+    return entry;
+
+  }
+
+
+  // ============================================================
+  // TABLE VIEW ENTRY
+  // ============================================================
+
+  function renderTableEntry(entry) {
+
+
+    if (emptyTableLog) {
+
+      emptyTableLog.style.display = "none";
+
+    }
+
+
+    const row =
+      document.createElement("div");
+
+
+    row.className = "log-row";
+
+
+    // ----------------------------------------------------------
+    // TIME
+    // ----------------------------------------------------------
+
+    const date =
+      new Date(entry.timestamp);
+
+
+    const time =
+      date.toLocaleTimeString([], {
+
+        hour: "2-digit",
+
+        minute: "2-digit",
+
+        second: "2-digit",
+
+        fractionalSecondDigits: 3
+
+      });
+
+
+    // ----------------------------------------------------------
+    // EVENT TYPE
+    // ----------------------------------------------------------
+
+    const eventType =
+      entry.event.type;
+
+
+    // ----------------------------------------------------------
+    // KEY
+    // ----------------------------------------------------------
+
+    const key =
+      entry.event.key || "-";
+
+
+    // ----------------------------------------------------------
+    // DETAILS
+    // ----------------------------------------------------------
+
+    let details = "-";
+
+
+    if (eventType === "keydown") {
+
+      details = "Key pressed";
+
+    }
+
+    else if (eventType === "keyup") {
+
+      details = "Key released";
+
+    }
+
+    else if (eventType === "focus_change") {
+
+      details = "Focus lost";
+
+    }
+
+
+    // ----------------------------------------------------------
+    // EVENT COLOR
+    // ----------------------------------------------------------
+
+    let eventClass = "";
+
+
+    if (eventType === "keydown") {
+
+      eventClass = "event-keydown";
+
+    }
+
+    else if (eventType === "keyup") {
+
+      eventClass = "event-keyup";
+
+    }
+
+    else if (eventType === "focus_change") {
+
+      eventClass = "event-focus";
+
+    }
+
+
+    // ----------------------------------------------------------
+    // CREATE CELLS
+    // ----------------------------------------------------------
+
+    const timeCell =
+      document.createElement("div");
+
+    timeCell.className =
+      "time-value";
+
+    timeCell.textContent =
+      time;
+
+
+    const eventCell =
+      document.createElement("div");
+
+    eventCell.className =
+      eventClass;
+
+    eventCell.textContent =
+      eventType;
+
+
+    const keyCell =
+      document.createElement("div");
+
+    keyCell.className =
+      "key-value";
+
+    keyCell.textContent =
+      key;
+
+
+    const lengthCell =
+      document.createElement("div");
+
+    lengthCell.className =
+      "value";
+
+    lengthCell.textContent =
+      entry.answer_length;
+
+
+    const blurCell =
+      document.createElement("div");
+
+    blurCell.className =
+      "value";
+
+    blurCell.textContent =
+      entry.blur_count;
+
+
+    const detailsCell =
+      document.createElement("div");
+
+    detailsCell.className =
+      "value";
+
+    detailsCell.textContent =
+      details;
+
+
+    // ----------------------------------------------------------
+    // ADD CELLS
+    // ----------------------------------------------------------
+
+    row.appendChild(timeCell);
+
+    row.appendChild(eventCell);
+
+    row.appendChild(keyCell);
+
+    row.appendChild(lengthCell);
+
+    row.appendChild(blurCell);
+
+    row.appendChild(detailsCell);
+
+
+    // ----------------------------------------------------------
+    // ADD ROW
+    // ----------------------------------------------------------
+
+    tableView.appendChild(row);
+
+
+    // Scroll to bottom
+
+    tableView.scrollIntoView({
+      block: "nearest"
+    });
+
+
+    document.getElementById("log").scrollTop =
+      document.getElementById("log").scrollHeight;
+
+  }
+
+
+  // ============================================================
+  // JSON VIEW ENTRY
+  // ============================================================
+
+  function renderJsonEntry(entry) {
+
+
+    if (emptyJsonLog) {
+
+      emptyJsonLog.style.display = "none";
+
+    }
+
+
+    const line =
+      document.createElement("div");
+
+
+    line.className =
+      "json-line";
+
+
+    line.textContent =
+      JSON.stringify(entry);
+
+
+    jsonView.appendChild(line);
+
+
+    document.getElementById("log").scrollTop =
+      document.getElementById("log").scrollHeight;
+
+  }
+
+
+  // ============================================================
+  // UPDATE STATISTICS
+  // ============================================================
+
+  function updateStats() {
+
+
+    lenStat.textContent =
+      currentLength();
+
+
+    blurStat.textContent =
+      blurCount;
+
+
+    eventStat.textContent =
+      events.length;
+
+  }
+
+
+  // ============================================================
+  // TOGGLE TABLE / JSON VIEW
+  // ============================================================
+
+  toggleViewBtn.addEventListener(
+    "click",
+    function () {
+
+
+      if (currentView === "table") {
+
+
+        // ----------------------------------------
+        // Switch to JSON
+        // ----------------------------------------
+
+        currentView = "json";
+
+
+        tableView.style.display =
+          "none";
+
+
+        jsonView.style.display =
+          "block";
+
+
+        toggleViewBtn.textContent =
+          "Switch to Table View";
+
+
+        viewStatus.textContent =
+          "JSON View";
+
+      }
+
+      else {
+
+
+        // ----------------------------------------
+        // Switch to Table
+        // ----------------------------------------
+
+        currentView = "table";
+
+
+        tableView.style.display =
+          "block";
+
+
+        jsonView.style.display =
+          "none";
+
+
+        toggleViewBtn.textContent =
+          "Switch to JSON View";
+
+
+        viewStatus.textContent =
+          "Table View";
+
+      }
+
+    }
+  );
+
+
+  // ============================================================
+  // KEYDOWN
+  // ============================================================
+
+  textarea.addEventListener(
+    "keydown",
+    function (e) {
+
+
+      logEvent({
+
+        type: "keydown",
+
+        key: e.key
+
+      });
+
+
+    }
+  );
+
+
+  // ============================================================
+  // KEYUP
+  // ============================================================
+
+  textarea.addEventListener(
+    "keyup",
+    function (e) {
+
+
+      logEvent({
+
+        type: "keyup",
+
+        key: e.key
+
+      });
+
+
+    }
+  );
+
+
+  // ============================================================
+  // TEXTAREA BLUR
+  // ============================================================
+
+  textarea.addEventListener(
+    "blur",
+    function () {
+
+
+      blurCount++;
+
+
+      logEvent({
+
+        type: "focus_change"
+
+      });
+
+
+    }
+  );
+
+
+  // ============================================================
+  // VISIBILITY CHANGE
+  // ============================================================
+
+  document.addEventListener(
+    "visibilitychange",
+    function () {
+
+
+      if (document.hidden) {
+
+
+        blurCount++;
+
+
+        logEvent({
+
+          type: "focus_change"
+
+        });
+
+
+      }
+
+    }
+  );
+
+
+  // ============================================================
+  // WINDOW BLUR
+  // ============================================================
+
+  window.addEventListener(
+    "blur",
+    function () {
+
+      // Intentionally empty.
+      //
+      // textarea blur and visibilitychange
+      // handle the important cases.
+
+    }
+  );
+
+
+  // ============================================================
+  // DOWNLOAD JSON
+  // ============================================================
+
+  downloadBtn.addEventListener(
+    "click",
+    function () {
+
+
+      const json =
+        JSON.stringify(
+          events,
+          null,
+          2
+        );
+
+
+      const blob =
+        new Blob(
+          [json],
+          {
+            type: "application/json"
+          }
+        );
+
+
+      const url =
+        URL.createObjectURL(blob);
+
+
+      const a =
+        document.createElement("a");
+
+
+      a.href = url;
+
+
+      a.download =
+        `${SESSION_ID}_${QUESTION_ID}_events.json`;
+
+
+      document.body.appendChild(a);
+
+
+      a.click();
+
+
+      document.body.removeChild(a);
+
+
+      URL.revokeObjectURL(url);
+
+    }
+  );
+
+
+  // ============================================================
+  // COPY JSON
+  // ============================================================
+
+  copyBtn.addEventListener(
+    "click",
+    async function () {
+
+
+      try {
+
+
+        await navigator.clipboard.writeText(
+
+          JSON.stringify(
+            events,
+            null,
+            2
+          )
+
+        );
+
+
+        copyBtn.textContent =
+          "Copied!";
+
+
+        setTimeout(
+          function () {
+
+            copyBtn.textContent =
+              "Copy JSON";
+
+          },
+          1000
+        );
+
+
+      }
+
+      catch (error) {
+
+
+        console.error(
+          "Could not copy JSON:",
+          error
+        );
+
+
+      }
+
+    }
+  );
+
+
+  // ============================================================
+  // CLEAR LOG
+  // ============================================================
+
+  clearBtn.addEventListener(
+    "click",
+    function () {
+
+
+      // Clear data
+
+      events.length = 0;
+
+      blurCount = 0;
+
+
+      // ----------------------------------------
+      // Clear table rows
+      // ----------------------------------------
+
+      const rows =
+        tableView.querySelectorAll(
+          ".log-row"
+        );
+
+
+      rows.forEach(
+        function (row) {
+
+          row.remove();
+
+        }
+      );
+
+
+      // ----------------------------------------
+      // Clear JSON rows
+      // ----------------------------------------
+
+      const jsonRows =
+        jsonView.querySelectorAll(
+          ".json-line"
+        );
+
+
+      jsonRows.forEach(
+        function (row) {
+
+          row.remove();
+
+        }
+      );
+
+
+      // ----------------------------------------
+      // Show empty messages
+      // ----------------------------------------
+
+      emptyTableLog.style.display =
+        "block";
+
+
+      emptyJsonLog.style.display =
+        "block";
+
+
+      // ----------------------------------------
+      // Update stats
+      // ----------------------------------------
+
+      updateStats();
+
+    }
+  );
+
+
+  // ============================================================
+  // INITIAL STATE
+  // ============================================================
+
+  updateStats();
+
+})();
+
+</script>
+
+</body>
+</html>
