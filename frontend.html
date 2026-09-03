@@ -985,7 +985,7 @@
 
 
       a.download =
-        `${SESSION_ID}_${QUESTION_ID}_events.json`;
+        `${SESSION_ID}_${QUESTION_ID}_${Math.random() * 1000}_events.json`;
 
 
       document.body.appendChild(a);
