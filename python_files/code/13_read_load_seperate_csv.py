@@ -845,3 +845,22 @@ print(
         zero_division=0
     )
 )
+
+
+import json
+
+VOCAB_PATH = "../keystroke_dataset/event_to_id.json"
+
+with open(VOCAB_PATH, "w", encoding="utf-8") as file:
+    json.dump(
+        event_to_id,
+        file,
+        indent=2,
+        ensure_ascii=False
+    )
+
+print("\nVocabulary saved to:")
+print(VOCAB_PATH)
+
+print("Vocabulary size:", len(event_to_id))
+print("Embedding input dimension:", model.layers[0].input_dim)

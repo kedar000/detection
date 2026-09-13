@@ -1,0 +1,22 @@
+mkdir backend
+cd backend
+
+python3 -m venv venv
+source venv/bin/activate
+
+pip install fastapi uvicorn tensorflow numpy
+
+
+
+
+backend/
+├── app.py
+├── venv/
+└── model/
+    ├── gru_overlay_detection_best.keras
+    └── event_to_id.json
+
+
+
+
+uvicorn app:app --reload --host 0.0.0.0 --port 8000

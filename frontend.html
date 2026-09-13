@@ -1,369 +1,1138 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<title>Keystroke Event Logger</title>
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>Online Assessment</title>
+
 
 <style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    max-width: 1000px;
-    margin: 40px auto;
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+
+  margin: 0;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    sans-serif;
+
+  background: #f5f7fa;
+
+  color: #1f2937;
+
+}
+
+
+/* ============================================================
+   TOP HEADER
+   ============================================================ */
+
+.top-header {
+
+  height: 76px;
+
+  background: #06285f;
+
+  color: white;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 0 76px;
+
+}
+
+
+/* Logo section */
+
+.logo-section {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  font-size: 21px;
+
+  font-weight: 600;
+
+}
+
+.logo-divider {
+
+  width: 1px;
+
+  height: 30px;
+
+  background: rgba(255,255,255,0.45);
+
+}
+
+.mettl-logo {
+
+  font-size: 24px;
+
+  font-weight: 700;
+
+}
+
+.test-title {
+
+  font-size: 14px;
+
+  font-weight: 400;
+
+  line-height: 1.3;
+
+  border-left: 1px solid rgba(255,255,255,0.4);
+
+  padding-left: 16px;
+
+}
+
+
+/* Header right */
+
+.header-right {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 28px;
+
+  font-size: 14px;
+
+}
+
+.timer {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+}
+
+.timer-icon {
+
+  font-size: 17px;
+
+}
+
+.finish-btn {
+
+  border: 0;
+
+  background: #e43d18;
+
+  color: white;
+
+  padding: 12px 26px;
+
+  border-radius: 4px;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+}
+
+.finish-btn:hover {
+
+  background: #c93212;
+
+}
+
+
+/* ============================================================
+   TEST NAVIGATION
+   ============================================================ */
+
+.question-nav {
+
+  height: 66px;
+
+  background: white;
+
+  border-bottom: 1px solid #d8dee8;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 10px;
+
+}
+
+.question-nav button {
+
+  width: 42px;
+
+  height: 40px;
+
+  border: 1px solid #d4dae3;
+
+  background: white;
+
+  border-radius: 4px;
+
+  cursor: pointer;
+
+  color: #526581;
+
+  font-size: 14px;
+
+}
+
+.question-nav button:hover {
+
+  background: #f0f4f9;
+
+}
+
+.question-nav button.active {
+
+  background: #e8eef7;
+
+  border-color: #b9c7d9;
+
+  color: #123d73;
+
+  font-weight: 600;
+
+}
+
+
+/* ============================================================
+   MAIN TEST AREA
+   ============================================================ */
+
+.test-container {
+
+  display: flex;
+
+  height: calc(100vh - 142px);
+
+  min-height: 600px;
+
+}
+
+
+/* ============================================================
+   LEFT QUESTION PANEL
+   ============================================================ */
+
+.question-panel {
+
+  width: 43%;
+
+  background: white;
+
+  border-right: 1px solid #d8dee8;
+
+  overflow-y: auto;
+
+  padding: 30px 34px;
+
+}
+
+.question-number {
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #172b4d;
+
+  margin-bottom: 20px;
+
+}
+
+.question-type {
+
+  display: inline-block;
+
+  background: #eef3f8;
+
+  color: #4b6382;
+
+  padding: 5px 10px;
+
+  border-radius: 3px;
+
+  font-size: 11px;
+
+  margin-bottom: 20px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.3px;
+
+}
+
+.question-title {
+
+  font-size: 18px;
+
+  line-height: 1.55;
+
+  color: #17355f;
+
+  font-weight: 600;
+
+  margin-bottom: 24px;
+
+}
+
+.question-description {
+
+  font-size: 14px;
+
+  line-height: 1.7;
+
+  color: #5d708c;
+
+}
+
+.question-description p {
+
+  margin: 0 0 15px;
+
+}
+
+.question-note {
+
+  margin-top: 25px;
+
+  padding: 14px;
+
+  background: #f5f7fa;
+
+  border-left: 3px solid #406a9e;
+
+  color: #5d708c;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+
+}
+
+
+/* ============================================================
+   RIGHT ANSWER PANEL
+   ============================================================ */
+
+.answer-panel {
+
+  width: 57%;
+
+  background: #f7f9fc;
+
+  display: flex;
+
+  flex-direction: column;
+
+}
+
+
+/* Answer header */
+
+.answer-header {
+
+  height: 62px;
+
+  background: white;
+
+  border-bottom: 1px solid #d8dee8;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 0 28px;
+
+}
+
+.answer-header-title {
+
+  font-size: 14px;
+
+  color: #405574;
+
+  font-weight: 600;
+
+}
+
+.answer-instruction {
+
+  font-size: 12px;
+
+  color: #7b8ba1;
+
+}
+
+
+/* Answer content */
+
+.answer-content {
+
+  flex: 1;
+
+  overflow-y: auto;
+
+  padding: 30px;
+
+}
+
+
+/* ============================================================
+   OPTIONS
+   ============================================================ */
+
+.option {
+
+  background: white;
+
+  border: 1px solid #d5dce6;
+
+  border-radius: 5px;
+
+  margin-bottom: 12px;
+
+  padding: 17px 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  cursor: pointer;
+
+  transition: border-color 0.15s,
+              background 0.15s;
+
+}
+
+.option:hover {
+
+  border-color: #9db1c9;
+
+  background: #fbfcfe;
+
+}
+
+.option.selected {
+
+  border-color: #315f96;
+
+  background: #eef4fb;
+
+}
+
+.option input {
+
+  width: 17px;
+
+  height: 17px;
+
+  cursor: pointer;
+
+}
+
+.option-text {
+
+  font-size: 14px;
+
+  color: #344860;
+
+}
+
+
+/* ============================================================
+   WRITTEN ANSWER
+   ============================================================ */
+
+.written-answer {
+
+  width: 100%;
+
+  min-height: 300px;
+
+  resize: vertical;
+
+  padding: 16px;
+
+  border: 1px solid #ccd5e0;
+
+  border-radius: 5px;
+
+  background: white;
+
+  outline: none;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+
+  color: #263b55;
+
+}
+
+.written-answer:focus {
+
+  border-color: #557aa5;
+
+}
+
+
+/* ============================================================
+   BOTTOM CONTROLS
+   ============================================================ */
+
+.answer-footer {
+
+  height: 70px;
+
+  background: white;
+
+  border-top: 1px solid #d8dee8;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 0 28px;
+
+}
+
+.footer-left {
+
+  display: flex;
+
+  gap: 10px;
+
+}
+
+.footer-right {
+
+  display: flex;
+
+  gap: 10px;
+
+}
+
+.nav-btn {
+
+  padding: 10px 20px;
+
+  border: 1px solid #cbd4df;
+
+  border-radius: 4px;
+
+  background: white;
+
+  color: #405574;
+
+  cursor: pointer;
+
+  font-size: 13px;
+
+}
+
+.nav-btn:hover {
+
+  background: #f1f4f8;
+
+}
+
+.nav-btn.primary {
+
+  background: #0b4ca2;
+
+  border-color: #0b4ca2;
+
+  color: white;
+
+}
+
+.nav-btn.primary:hover {
+
+  background: #083d82;
+
+}
+
+
+/* ============================================================
+   EVENT DEBUG PANEL
+   ============================================================ */
+
+.debug-panel {
+
+  position: fixed;
+
+  right: 20px;
+
+  bottom: 20px;
+
+  width: 330px;
+
+  background: #101820;
+
+  color: #d7e1ec;
+
+  border-radius: 6px;
+
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+
+  z-index: 1000;
+
+  overflow: hidden;
+
+}
+
+.debug-header {
+
+  background: #182532;
+
+  padding: 10px 14px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  font-size: 12px;
+
+}
+
+.debug-header button {
+
+  background: transparent;
+
+  color: #b9c6d4;
+
+  border: 0;
+
+  cursor: pointer;
+
+}
+
+.debug-content {
+
+  height: 180px;
+
+  overflow-y: auto;
+
+  padding: 10px;
+
+  font-family: monospace;
+
+  font-size: 10px;
+
+}
+
+.debug-event {
+
+  padding: 5px 0;
+
+  border-bottom: 1px solid #263442;
+
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+  .top-header {
+
     padding: 0 20px;
-    color: #222;
+
   }
 
-  h1 {
-    font-size: 20px;
-    font-weight: 600;
+  .test-container {
+
+    flex-direction: column;
+
+    height: auto;
+
   }
 
-  .meta {
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 12px;
-    line-height: 1.5;
-  }
+  .question-panel,
+  .answer-panel {
 
-  textarea {
     width: 100%;
-    min-height: 140px;
-    font-size: 15px;
-    padding: 12px;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    resize: vertical;
-    outline: none;
+
   }
 
-  textarea:focus {
-    border-color: #888;
+  .question-panel {
+
+    min-height: 350px;
+
   }
 
-  .stats {
-    display: flex;
-    gap: 25px;
-    margin: 12px 0;
-    font-size: 13px;
-    color: #444;
+  .answer-panel {
+
+    min-height: 500px;
+
   }
 
-  .stats b {
-    color: #000;
-  }
+}
+/* ============================================================
+   RESULT SCREEN
+   ============================================================ */
 
-  .actions {
-    margin: 12px 0;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+#resultScreen {
 
-  button {
-    padding: 8px 14px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: #f7f7f7;
-    cursor: pointer;
-    font-size: 13px;
-  }
+  position: fixed;
 
-  button:hover {
-    background: #eee;
-  }
+  inset: 0;
 
-  /* Active toggle button */
-  #toggleViewBtn {
-    background: #222;
-    color: white;
-    border-color: #222;
-  }
+  background: #f5f7fa;
 
-  #toggleViewBtn:hover {
-    background: #444;
-  }
+  z-index: 5000;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+}
 
 
-  /* ============================================================
-     COMMON LOG CONTAINER
-     ============================================================ */
+.result-card {
 
-  #log {
-    background: #0d1117;
-    color: #c9d1d9;
-    font-family: 'SF Mono', Consolas, monospace;
-    font-size: 12px;
-    border-radius: 6px;
-    height: 400px;
-    overflow-y: auto;
-    overflow-x: auto;
-  }
+  width: 460px;
 
+  background: white;
 
-  /* ============================================================
-     TABLE VIEW
-     ============================================================ */
+  border: 1px solid #d8dee8;
 
-  #tableView {
-    min-width: 750px;
-  }
+  border-radius: 8px;
 
-  .log-header,
-  .log-row {
-    display: grid;
+  padding: 45px;
 
-    grid-template-columns:
-      115px
-      130px
-      140px
-      90px
-      100px
-      1fr;
+  text-align: center;
 
-    gap: 10px;
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.12);
 
-    align-items: center;
-
-    padding: 8px 12px;
-
-    box-sizing: border-box;
-  }
-
-  .log-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-
-    background: #161b22;
-
-    color: #8b949e;
-
-    font-weight: bold;
-
-    border-bottom: 1px solid #30363d;
-  }
-
-  .log-row {
-    border-bottom: 1px solid #21262d;
-  }
-
-  .log-row:hover {
-    background: #161b22;
-  }
-
-  .time-value {
-    color: #8b949e;
-  }
-
-  .event-keydown {
-    color: #58a6ff;
-    font-weight: 600;
-  }
-
-  .event-keyup {
-    color: #79c0ff;
-    font-weight: 600;
-  }
-
-  .event-focus {
-    color: #f0883e;
-    font-weight: 600;
-  }
-
-  .key-value {
-    color: #f0f6fc;
-    font-weight: 600;
-  }
-
-  .value {
-    color: #c9d1d9;
-  }
+}
 
 
-  /* ============================================================
-     RAW JSON VIEW
-     ============================================================ */
+.result-title {
 
-  #jsonView {
-    display: none;
+  font-size: 13px;
 
-    padding: 14px;
+  font-weight: 600;
 
-    white-space: pre-wrap;
-    word-break: break-word;
+  color: #6b7c93;
 
-    min-height: 100%;
-    box-sizing: border-box;
-  }
+  letter-spacing: 1px;
 
-  .json-line {
-    margin-bottom: 4px;
-    padding: 4px 6px;
-    border-bottom: 1px solid #21262d;
-  }
+  margin-bottom: 10px;
 
-  .json-line:hover {
-    background: #161b22;
-  }
+}
 
 
-  /* ============================================================
-     EMPTY MESSAGE
-     ============================================================ */
+.result-subtitle {
 
-  .empty-log {
-    color: #6e7681;
-    text-align: center;
-    padding: 30px;
-  }
+  font-size: 20px;
+
+  font-weight: 600;
+
+  color: #17355f;
+
+  margin-bottom: 30px;
+
+}
 
 
-  /* ============================================================
-     EVENT SUMMARY
-     ============================================================ */
+.result-probability {
 
-  .event-summary {
-    margin-top: 12px;
-    padding: 10px 12px;
+  font-size: 52px;
 
-    background: #f6f8fa;
+  font-weight: 700;
 
-    border: 1px solid #ddd;
+  color: #17355f;
 
-    border-radius: 6px;
+  margin-bottom: 8px;
 
-    font-size: 12px;
+}
 
-    color: #555;
-  }
+
+.result-classification {
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  margin-bottom: 22px;
+
+}
+
+
+.result-events {
+
+  font-size: 13px;
+
+  color: #68788e;
+
+  margin-bottom: 30px;
+
+}
+
+
+.restart-btn {
+
+  padding: 12px 28px;
+
+  border: 0;
+
+  border-radius: 4px;
+
+  background: #0b4ca2;
+
+  color: white;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+}
+
+
+.restart-btn:hover {
+
+  background: #083d82;
+
+}
 
 </style>
+
 </head>
 
 
 <body>
 
-<h1>Keystroke Event Logger</h1>
 
-<div class="meta">
-  Type in the box below. Every <code>keydown</code> and <code>keyup</code>
-  event is logged. Switching tabs, minimizing, or leaving the textarea
-  logs a <code>focus_change</code> event.
-</div>
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
 
+<header class="top-header">
 
-<textarea
-  id="answerBox"
-  placeholder="Start typing..."
-></textarea>
+  <div class="logo-section">
 
+    <div>Mercer</div>
 
-<div class="stats">
+    <div class="logo-divider"></div>
 
-  <div>
-    Length: <b id="lenStat">0</b>
+    <div class="mettl-logo">mettl</div>
+
+    <div class="test-title">
+
+      Sample Assessment<br>
+
+      Test
+
+    </div>
+
   </div>
 
-  <div>
-    Blur count: <b id="blurStat">0</b>
+
+  <div class="header-right">
+
+    <div class="timer">
+
+      <span class="timer-icon">◷</span>
+
+      <span>
+        Test Time:
+        <strong id="timer">30:00</strong>
+      </span>
+
+    </div>
+
+
+    <button
+      class="finish-btn"
+      id="finishBtn"
+    >
+      Finish Test
+    </button>
+
   </div>
 
-  <div>
-    Events logged: <b id="eventStat">0</b>
-  </div>
-
-</div>
+</header>
 
 
 <!-- ============================================================
-     BUTTONS
+     QUESTION NAVIGATION
      ============================================================ -->
 
-<div class="actions">
+<nav class="question-nav">
 
-  <button id="downloadBtn">
-    Download JSON
+  <button
+    class="active"
+    data-question="0"
+  >
+    1
   </button>
 
-  <button id="copyBtn">
-    Copy JSON
+  <button data-question="1">
+    2
   </button>
 
-  <button id="clearBtn">
-    Clear Log
+  <button data-question="2">
+    3
   </button>
 
-  <button id="toggleViewBtn">
-    Switch to JSON View
+  <button data-question="3">
+    4
   </button>
 
-</div>
+</nav>
 
 
 <!-- ============================================================
-     LOG CONTAINER
+     MAIN
      ============================================================ -->
 
-<div id="log">
+<main class="test-container">
 
 
   <!-- ==========================================================
-       TABLE VIEW
+       LEFT QUESTION
        ========================================================== -->
 
-  <div id="tableView">
+  <section class="question-panel">
 
-    <div class="log-header">
+    <div class="question-number">
+      Question <span id="questionNumber">1</span>
+    </div>
 
-      <div>Time</div>
 
-      <div>Event</div>
+    <div
+      class="question-type"
+      id="questionType"
+    >
+      Multiple Choice
+    </div>
 
-      <div>Key</div>
 
-      <div>Length</div>
+    <div
+      class="question-title"
+      id="questionTitle"
+    >
+      Which of the following is a programming language?
+    </div>
 
-      <div>Blur Count</div>
 
-      <div>Details</div>
+    <div
+      class="question-description"
+      id="questionDescription"
+    >
+
+      <p>
+        Select the option that correctly answers the
+        question.
+      </p>
 
     </div>
 
 
     <div
-      id="emptyTableLog"
-      class="empty-log"
+      class="question-note"
+      id="questionNote"
     >
-      No events yet. Start typing...
+      Select one answer.
     </div>
 
-  </div>
+  </section>
 
 
   <!-- ==========================================================
-       RAW JSON VIEW
+       RIGHT ANSWER
        ========================================================== -->
 
-  <div id="jsonView">
+  <section class="answer-panel">
+
+
+    <div class="answer-header">
+
+      <div
+        class="answer-header-title"
+        id="answerHeader"
+      >
+        Answer
+      </div>
+
+      <div
+        class="answer-instruction"
+        id="answerInstruction"
+      >
+        Select one option
+      </div>
+
+    </div>
+
 
     <div
-      id="emptyJsonLog"
-      class="empty-log"
+      class="answer-content"
+      id="answerContent"
     >
-      No events yet. Start typing...
     </div>
+
+
+    <div class="answer-footer">
+
+      <div class="footer-left">
+
+        <button
+          class="nav-btn"
+          id="previousBtn"
+        >
+          Previous
+        </button>
+
+      </div>
+
+
+      <div class="footer-right">
+
+        <button
+          class="nav-btn"
+          id="nextBtn"
+        >
+          Next
+        </button>
+
+      </div>
+
+    </div>
+
+
+  </section>
+
+</main>
+
+<!-- ============================================================
+     RESULT SCREEN
+     ============================================================ -->
+
+<div
+  id="resultScreen"
+  style="display: none;"
+>
+
+  <div class="result-card">
+
+    <div class="result-title">
+      TEST COMPLETED
+    </div>
+
+    <div class="result-subtitle">
+      Overlay Detection Result
+    </div>
+
+    <div
+      id="resultProbability"
+      class="result-probability"
+    >
+      --
+    </div>
+
+    <div
+      id="resultClassification"
+      class="result-classification"
+    >
+      --
+    </div>
+
+    <div
+      id="resultEventCount"
+      class="result-events"
+    >
+      Events analyzed: --
+    </div>
+
+    <button
+      id="restartBtn"
+      class="restart-btn"
+    >
+      Restart Test
+    </button>
+
+  </div>
+
+</div>
+
+<!-- ============================================================
+     DEBUG EVENT PANEL
+     ============================================================ -->
+
+<div class="debug-panel">
+
+  <div class="debug-header">
+
+    <span>
+      Event Logger
+    </span>
+
+    <button id="clearEventsBtn">
+      Clear
+    </button>
 
   </div>
 
 
-</div>
+  <div
+    class="debug-content"
+    id="debugContent"
+  >
 
+    Waiting for events...
 
-<div class="event-summary">
-
-  <b>Current view:</b>
-  <span id="viewStatus">Table View</span>
+  </div>
 
 </div>
 
@@ -379,83 +1148,239 @@
 
   const SESSION_ID = "session_001";
 
-  const QUESTION_ID = "q_01";
+
+  // ============================================================
+  // QUESTIONS
+  // ============================================================
+
+  const questions = [
+
+    {
+      id: "q_01",
+
+      type: "mcq",
+
+      typeLabel: "Multiple Choice",
+
+      title:
+        "Which of the following is a programming language?",
+
+      description:
+        "Select the option that correctly answers the question.",
+
+      note:
+        "Select one answer.",
+
+      options: [
+
+        "HTML",
+
+        "Python",
+
+        "CSS",
+
+        "JSON"
+
+      ]
+
+    },
+
+
+    {
+      id: "q_02",
+
+      type: "multiple",
+
+      typeLabel: "Multiple Answer",
+
+      title:
+        "Which of the following are commonly used programming languages?",
+
+      description:
+        "More than one option may be correct.",
+
+      note:
+        "Select all answers that apply.",
+
+      options: [
+
+        "Python",
+
+        "Java",
+
+        "HTML",
+
+        "C++"
+
+      ]
+
+    },
+
+
+    {
+      id: "q_03",
+
+      type: "written",
+
+      typeLabel: "Written Answer",
+
+      title:
+        "Explain what a variable is in programming.",
+
+      description:
+        "Write a short explanation in your own words.",
+
+      note:
+        "Enter your answer in the text area."
+
+    },
+
+
+    {
+      id: "q_04",
+
+      type: "written",
+
+      typeLabel: "Written Answer",
+
+      title:
+        "What is the purpose of a function in programming?",
+
+      description:
+        "Explain the purpose of a function and why functions are useful.",
+
+      note:
+        "Enter your answer in the text area."
+
+    }
+
+  ];
 
 
   // ============================================================
-  // DOM ELEMENTS
+  // STATE
   // ============================================================
 
-  const textarea =
-    document.getElementById("answerBox");
-
-
-  const tableView =
-    document.getElementById("tableView");
-
-
-  const jsonView =
-    document.getElementById("jsonView");
-
-
-  const emptyTableLog =
-    document.getElementById("emptyTableLog");
-
-
-  const emptyJsonLog =
-    document.getElementById("emptyJsonLog");
-
-
-  const lenStat =
-    document.getElementById("lenStat");
-
-
-  const blurStat =
-    document.getElementById("blurStat");
-
-
-  const eventStat =
-    document.getElementById("eventStat");
-
-
-  const downloadBtn =
-    document.getElementById("downloadBtn");
-
-
-  const copyBtn =
-    document.getElementById("copyBtn");
-
-
-  const clearBtn =
-    document.getElementById("clearBtn");
-
-
-  const toggleViewBtn =
-    document.getElementById("toggleViewBtn");
-
-
-  const viewStatus =
-    document.getElementById("viewStatus");
-
-
-  // ============================================================
-  // VARIABLES
-  // ============================================================
+  let currentQuestion = 0;
 
   let blurCount = 0;
 
   const events = [];
 
-  let currentView = "table";
+
+  // Used to prevent duplicate focus_change events.
+
+  let lastFocusChangeTimestamp = 0;
 
 
   // ============================================================
-  // GET CURRENT ANSWER LENGTH
+  // DOM
   // ============================================================
 
-  function currentLength() {
+  const questionNumber =
+    document.getElementById("questionNumber");
 
-    return textarea.value.length;
+  const questionType =
+    document.getElementById("questionType");
+
+  const questionTitle =
+    document.getElementById("questionTitle");
+
+  const questionDescription =
+    document.getElementById("questionDescription");
+
+  const questionNote =
+    document.getElementById("questionNote");
+
+  const answerContent =
+    document.getElementById("answerContent");
+
+  const answerInstruction =
+    document.getElementById("answerInstruction");
+
+  const previousBtn =
+    document.getElementById("previousBtn");
+
+  const nextBtn =
+    document.getElementById("nextBtn");
+
+  const debugContent =
+    document.getElementById("debugContent");
+
+  const clearEventsBtn =
+    document.getElementById("clearEventsBtn");
+
+  const finishBtn =
+    document.getElementById("finishBtn");
+
+  const resultScreen =
+  document.getElementById("resultScreen");
+
+const resultProbability =
+  document.getElementById("resultProbability");
+
+const resultClassification =
+  document.getElementById("resultClassification");
+
+const resultEventCount =
+  document.getElementById("resultEventCount");
+
+const restartBtn =
+  document.getElementById("restartBtn");
+
+
+  // ============================================================
+  // ANSWERS
+  // ============================================================
+
+  const answers = {
+
+    q_01: null,
+
+    q_02: [],
+
+    q_03: "",
+
+    q_04: ""
+
+  };
+
+
+  // ============================================================
+  // CURRENT ANSWER LENGTH
+  // ============================================================
+
+  function currentAnswerLength() {
+
+    const question =
+      questions[currentQuestion];
+
+    const answer =
+      answers[question.id];
+
+
+    if (question.type === "written") {
+
+      return answer.length;
+
+    }
+
+
+    if (question.type === "mcq") {
+
+      return answer ? 1 : 0;
+
+    }
+
+
+    if (question.type === "multiple") {
+
+      return answer.length;
+
+    }
+
+
+    return 0;
 
   }
 
@@ -466,20 +1391,26 @@
 
   function logEvent(eventPayload) {
 
+    const question =
+      questions[currentQuestion];
+
 
     const entry = {
 
       session_id: SESSION_ID,
 
-      question_id: QUESTION_ID,
+      question_id: question.id,
 
       timestamp: Date.now(),
 
-      answer_length: currentLength(),
+      answer_length:
+        currentAnswerLength(),
 
-      blur_count: blurCount,
+      blur_count:
+        blurCount,
 
-      event: eventPayload
+      event:
+        eventPayload
 
     };
 
@@ -487,12 +1418,7 @@
     events.push(entry);
 
 
-    renderTableEntry(entry);
-
-    renderJsonEntry(entry);
-
-
-    updateStats();
+    renderDebugEvent(entry);
 
 
     return entry;
@@ -501,333 +1427,442 @@
 
 
   // ============================================================
-  // TABLE VIEW ENTRY
+  // DEBUG EVENT DISPLAY
   // ============================================================
 
-  function renderTableEntry(entry) {
+  function renderDebugEvent(entry) {
 
+    // Remove empty message.
 
-    if (emptyTableLog) {
+    if (
+      debugContent.textContent ===
+      "Waiting for events..."
+    ) {
 
-      emptyTableLog.style.display = "none";
-
-    }
-
-
-    const row =
-      document.createElement("div");
-
-
-    row.className = "log-row";
-
-
-    // ----------------------------------------------------------
-    // TIME
-    // ----------------------------------------------------------
-
-    const date =
-      new Date(entry.timestamp);
-
-
-    const time =
-      date.toLocaleTimeString([], {
-
-        hour: "2-digit",
-
-        minute: "2-digit",
-
-        second: "2-digit",
-
-        fractionalSecondDigits: 3
-
-      });
-
-
-    // ----------------------------------------------------------
-    // EVENT TYPE
-    // ----------------------------------------------------------
-
-    const eventType =
-      entry.event.type;
-
-
-    // ----------------------------------------------------------
-    // KEY
-    // ----------------------------------------------------------
-
-    const key =
-      entry.event.key || "-";
-
-
-    // ----------------------------------------------------------
-    // DETAILS
-    // ----------------------------------------------------------
-
-    let details = "-";
-
-
-    if (eventType === "keydown") {
-
-      details = "Key pressed";
-
-    }
-
-    else if (eventType === "keyup") {
-
-      details = "Key released";
-
-    }
-
-    else if (eventType === "focus_change") {
-
-      details = "Focus lost";
+      debugContent.textContent = "";
 
     }
 
 
-    // ----------------------------------------------------------
-    // EVENT COLOR
-    // ----------------------------------------------------------
-
-    let eventClass = "";
-
-
-    if (eventType === "keydown") {
-
-      eventClass = "event-keydown";
-
-    }
-
-    else if (eventType === "keyup") {
-
-      eventClass = "event-keyup";
-
-    }
-
-    else if (eventType === "focus_change") {
-
-      eventClass = "event-focus";
-
-    }
-
-
-    // ----------------------------------------------------------
-    // CREATE CELLS
-    // ----------------------------------------------------------
-
-    const timeCell =
-      document.createElement("div");
-
-    timeCell.className =
-      "time-value";
-
-    timeCell.textContent =
-      time;
-
-
-    const eventCell =
-      document.createElement("div");
-
-    eventCell.className =
-      eventClass;
-
-    eventCell.textContent =
-      eventType;
-
-
-    const keyCell =
-      document.createElement("div");
-
-    keyCell.className =
-      "key-value";
-
-    keyCell.textContent =
-      key;
-
-
-    const lengthCell =
-      document.createElement("div");
-
-    lengthCell.className =
-      "value";
-
-    lengthCell.textContent =
-      entry.answer_length;
-
-
-    const blurCell =
-      document.createElement("div");
-
-    blurCell.className =
-      "value";
-
-    blurCell.textContent =
-      entry.blur_count;
-
-
-    const detailsCell =
-      document.createElement("div");
-
-    detailsCell.className =
-      "value";
-
-    detailsCell.textContent =
-      details;
-
-
-    // ----------------------------------------------------------
-    // ADD CELLS
-    // ----------------------------------------------------------
-
-    row.appendChild(timeCell);
-
-    row.appendChild(eventCell);
-
-    row.appendChild(keyCell);
-
-    row.appendChild(lengthCell);
-
-    row.appendChild(blurCell);
-
-    row.appendChild(detailsCell);
-
-
-    // ----------------------------------------------------------
-    // ADD ROW
-    // ----------------------------------------------------------
-
-    tableView.appendChild(row);
-
-
-    // Scroll to bottom
-
-    tableView.scrollIntoView({
-      block: "nearest"
-    });
-
-
-    document.getElementById("log").scrollTop =
-      document.getElementById("log").scrollHeight;
-
-  }
-
-
-  // ============================================================
-  // JSON VIEW ENTRY
-  // ============================================================
-
-  function renderJsonEntry(entry) {
-
-
-    if (emptyJsonLog) {
-
-      emptyJsonLog.style.display = "none";
-
-    }
-
-
-    const line =
+    const div =
       document.createElement("div");
 
 
-    line.className =
-      "json-line";
+    div.className =
+      "debug-event";
 
 
-    line.textContent =
+    div.textContent =
       JSON.stringify(entry);
 
 
-    jsonView.appendChild(line);
+    debugContent.appendChild(div);
 
 
-    document.getElementById("log").scrollTop =
-      document.getElementById("log").scrollHeight;
-
-  }
-
-
-  // ============================================================
-  // UPDATE STATISTICS
-  // ============================================================
-
-  function updateStats() {
-
-
-    lenStat.textContent =
-      currentLength();
-
-
-    blurStat.textContent =
-      blurCount;
-
-
-    eventStat.textContent =
-      events.length;
+    debugContent.scrollTop =
+      debugContent.scrollHeight;
 
   }
 
 
   // ============================================================
-  // TOGGLE TABLE / JSON VIEW
+  // RENDER QUESTION
   // ============================================================
 
-  toggleViewBtn.addEventListener(
+  function renderQuestion() {
+
+    const question =
+      questions[currentQuestion];
+
+
+    questionNumber.textContent =
+      currentQuestion + 1;
+
+
+    questionType.textContent =
+      question.typeLabel;
+
+
+    questionTitle.textContent =
+      question.title;
+
+
+    questionDescription.textContent =
+      question.description;
+
+
+    questionNote.textContent =
+      question.note;
+
+
+    answerContent.innerHTML = "";
+
+
+    // ----------------------------------------------------------
+    // MCQ
+    // ----------------------------------------------------------
+
+    if (question.type === "mcq") {
+
+      answerInstruction.textContent =
+        "Select one option";
+
+
+      question.options.forEach(
+        function (option, index) {
+
+          const label =
+            document.createElement("label");
+
+
+          label.className =
+            "option";
+
+
+          const input =
+            document.createElement("input");
+
+
+          input.type =
+            "radio";
+
+          input.name =
+            "mcq-answer";
+
+          input.value =
+            option;
+
+
+          input.checked =
+            answers[question.id] === option;
+
+
+          const span =
+            document.createElement("span");
+
+
+          span.className =
+            "option-text";
+
+          span.textContent =
+            option;
+
+
+          label.appendChild(input);
+
+          label.appendChild(span);
+
+
+          if (input.checked) {
+
+            label.classList.add(
+              "selected"
+            );
+
+          }
+
+
+          input.addEventListener(
+            "change",
+            function () {
+
+              answers[question.id] =
+                option;
+
+
+              document
+                .querySelectorAll(".option")
+                .forEach(
+                  function (item) {
+
+                    item.classList.remove(
+                      "selected"
+                    );
+
+                  }
+                );
+
+
+              label.classList.add(
+                "selected"
+              );
+
+            }
+          );
+
+
+          answerContent.appendChild(label);
+
+        }
+      );
+
+    }
+
+
+    // ----------------------------------------------------------
+    // MULTIPLE ANSWER
+    // ----------------------------------------------------------
+
+    else if (question.type === "multiple") {
+
+      answerInstruction.textContent =
+        "Select all that apply";
+
+
+      question.options.forEach(
+        function (option) {
+
+          const label =
+            document.createElement("label");
+
+
+          label.className =
+            "option";
+
+
+          const input =
+            document.createElement("input");
+
+
+          input.type =
+            "checkbox";
+
+          input.value =
+            option;
+
+
+          input.checked =
+            answers[question.id].includes(
+              option
+            );
+
+
+          const span =
+            document.createElement("span");
+
+
+          span.className =
+            "option-text";
+
+          span.textContent =
+            option;
+
+
+          label.appendChild(input);
+
+          label.appendChild(span);
+
+
+          if (input.checked) {
+
+            label.classList.add(
+              "selected"
+            );
+
+          }
+
+
+          input.addEventListener(
+            "change",
+            function () {
+
+              if (input.checked) {
+
+                answers[question.id].push(
+                  option
+                );
+
+                label.classList.add(
+                  "selected"
+                );
+
+              }
+
+              else {
+
+                answers[question.id] =
+                  answers[question.id]
+                    .filter(
+                      function (item) {
+
+                        return item !== option;
+
+                      }
+                    );
+
+
+                label.classList.remove(
+                  "selected"
+                );
+
+              }
+
+            }
+          );
+
+
+          answerContent.appendChild(label);
+
+        }
+      );
+
+    }
+
+
+    // ----------------------------------------------------------
+    // WRITTEN
+    // ----------------------------------------------------------
+
+    else if (question.type === "written") {
+
+      answerInstruction.textContent =
+        "Write your answer";
+
+
+      const textarea =
+        document.createElement("textarea");
+
+
+      textarea.className =
+        "written-answer";
+
+
+      textarea.placeholder =
+        "Type your answer here...";
+
+
+      textarea.value =
+        answers[question.id];
+
+
+      textarea.addEventListener(
+        "input",
+        function () {
+
+          answers[question.id] =
+            textarea.value;
+
+        }
+      );
+
+
+      answerContent.appendChild(
+        textarea
+      );
+
+    }
+
+
+    updateNavigation();
+
+  }
+
+
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+
+  function updateNavigation() {
+
+    previousBtn.disabled =
+      currentQuestion === 0;
+
+
+    nextBtn.textContent =
+      currentQuestion === questions.length - 1
+        ? "Finish"
+        : "Next";
+
+
+    document
+      .querySelectorAll(
+        ".question-nav button"
+      )
+      .forEach(
+        function (button, index) {
+
+          button.classList.toggle(
+            "active",
+            index === currentQuestion
+          );
+
+        }
+      );
+
+  }
+
+
+  // ============================================================
+  // QUESTION NAVIGATION BUTTONS
+  // ============================================================
+
+  document
+    .querySelectorAll(
+      ".question-nav button"
+    )
+    .forEach(
+      function (button) {
+
+        button.addEventListener(
+          "click",
+          function () {
+
+            currentQuestion =
+              Number(
+                button.dataset.question
+              );
+
+            renderQuestion();
+
+          }
+        );
+
+      }
+    );
+
+
+  // ============================================================
+  // PREVIOUS
+  // ============================================================
+
+  previousBtn.addEventListener(
     "click",
     function () {
 
+      if (currentQuestion > 0) {
 
-      if (currentView === "table") {
+        currentQuestion--;
 
+        renderQuestion();
 
-        // ----------------------------------------
-        // Switch to JSON
-        // ----------------------------------------
+      }
 
-        currentView = "json";
-
-
-        tableView.style.display =
-          "none";
+    }
+  );
 
 
-        jsonView.style.display =
-          "block";
+  // ============================================================
+  // NEXT
+  // ============================================================
 
+  nextBtn.addEventListener(
+    "click",
+    function () {
 
-        toggleViewBtn.textContent =
-          "Switch to Table View";
+      if (
+        currentQuestion <
+        questions.length - 1
+      ) {
 
+        currentQuestion++;
 
-        viewStatus.textContent =
-          "JSON View";
+        renderQuestion();
 
       }
 
       else {
 
-
-        // ----------------------------------------
-        // Switch to Table
-        // ----------------------------------------
-
-        currentView = "table";
-
-
-        tableView.style.display =
-          "block";
-
-
-        jsonView.style.display =
-          "none";
-
-
-        toggleViewBtn.textContent =
-          "Switch to JSON View";
-
-
-        viewStatus.textContent =
-          "Table View";
+        finishTest();
 
       }
 
@@ -838,11 +1873,19 @@
   // ============================================================
   // KEYDOWN
   // ============================================================
+  //
+  // IMPORTANT:
+  //
+  // We listen on the DOCUMENT rather than only the textarea.
+  //
+  // Therefore keyboard activity throughout the test can be
+  // collected.
+  //
+  // ============================================================
 
-  textarea.addEventListener(
+  document.addEventListener(
     "keydown",
     function (e) {
-
 
       logEvent({
 
@@ -852,7 +1895,6 @@
 
       });
 
-
     }
   );
 
@@ -861,10 +1903,9 @@
   // KEYUP
   // ============================================================
 
-  textarea.addEventListener(
+  document.addEventListener(
     "keyup",
     function (e) {
-
 
       logEvent({
 
@@ -874,55 +1915,76 @@
 
       });
 
-
     }
   );
 
 
   // ============================================================
-  // TEXTAREA BLUR
+  // FOCUS CHANGE
+  // ============================================================
+  //
+  // DO NOT use textarea blur.
+  //
+  // Moving from textarea → button
+  // Moving from question → question
+  // Clicking an option
+  //
+  // should NOT generate focus_change.
+  //
+  // We only generate it when the browser/test becomes hidden
+  // or the browser window loses focus.
+  //
   // ============================================================
 
-  textarea.addEventListener(
-    "blur",
-    function () {
+  function logFocusChange() {
+
+    const now =
+      Date.now();
 
 
-      blurCount++;
+    // Prevent visibilitychange + window.blur from creating
+    // two events for the same tab/window switch.
 
+    if (
+      now - lastFocusChangeTimestamp <
+      1000
+    ) {
 
-      logEvent({
-
-        type: "focus_change"
-
-      });
-
+      return;
 
     }
-  );
+
+
+    lastFocusChangeTimestamp =
+      now;
+
+
+    blurCount++;
+
+
+    logEvent({
+
+      type: "focus_change"
+
+    });
+
+  }
 
 
   // ============================================================
-  // VISIBILITY CHANGE
+  // TAB SWITCH / PAGE HIDDEN
   // ============================================================
 
   document.addEventListener(
     "visibilitychange",
     function () {
 
+      if (
+        document.visibilityState ===
+        "hidden"
+      ) {
 
-      if (document.hidden) {
-
-
-        blurCount++;
-
-
-        logEvent({
-
-          type: "focus_change"
-
-        });
-
+        logFocusChange();
 
       }
 
@@ -931,126 +1993,27 @@
 
 
   // ============================================================
-  // WINDOW BLUR
+  // BROWSER WINDOW LOSES FOCUS
   // ============================================================
 
   window.addEventListener(
     "blur",
     function () {
 
-      // Intentionally empty.
-      //
-      // textarea blur and visibilitychange
-      // handle the important cases.
+      /*
+       * If the document is still visible, this is normally
+       * the browser window losing focus.
+       *
+       * If the document is already hidden, visibilitychange
+       * will handle it.
+       */
 
-    }
-  );
+      if (
+        document.visibilityState !==
+        "hidden"
+      ) {
 
-
-  // ============================================================
-  // DOWNLOAD JSON
-  // ============================================================
-
-  downloadBtn.addEventListener(
-    "click",
-    function () {
-
-
-      const json =
-        JSON.stringify(
-          events,
-          null,
-          2
-        );
-
-
-      const blob =
-        new Blob(
-          [json],
-          {
-            type: "application/json"
-          }
-        );
-
-
-      const url =
-        URL.createObjectURL(blob);
-
-
-      const a =
-        document.createElement("a");
-
-
-      a.href = url;
-
-
-      a.download =
-        `${SESSION_ID}_${QUESTION_ID}_${Math.random() * 1000}_events.json`;
-
-
-      document.body.appendChild(a);
-
-
-      a.click();
-
-
-      document.body.removeChild(a);
-
-
-      URL.revokeObjectURL(url);
-
-    }
-  );
-
-
-  // ============================================================
-  // COPY JSON
-  // ============================================================
-
-  copyBtn.addEventListener(
-    "click",
-    async function () {
-
-
-      try {
-
-
-        await navigator.clipboard.writeText(
-
-          JSON.stringify(
-            events,
-            null,
-            2
-          )
-
-        );
-
-
-        copyBtn.textContent =
-          "Copied!";
-
-
-        setTimeout(
-          function () {
-
-            copyBtn.textContent =
-              "Copy JSON";
-
-          },
-          1000
-        );
-
-
-      }
-
-      catch (error) {
-
-
-        console.error(
-          "Could not copy JSON:",
-          error
-        );
-
+        logFocusChange();
 
       }
 
@@ -1059,90 +2022,284 @@
 
 
   // ============================================================
-  // CLEAR LOG
+  // CLEAR DEBUG EVENTS
   // ============================================================
 
-  clearBtn.addEventListener(
+  clearEventsBtn.addEventListener(
     "click",
     function () {
-
-
-      // Clear data
 
       events.length = 0;
 
       blurCount = 0;
 
-
-      // ----------------------------------------
-      // Clear table rows
-      // ----------------------------------------
-
-      const rows =
-        tableView.querySelectorAll(
-          ".log-row"
-        );
-
-
-      rows.forEach(
-        function (row) {
-
-          row.remove();
-
-        }
-      );
-
-
-      // ----------------------------------------
-      // Clear JSON rows
-      // ----------------------------------------
-
-      const jsonRows =
-        jsonView.querySelectorAll(
-          ".json-line"
-        );
-
-
-      jsonRows.forEach(
-        function (row) {
-
-          row.remove();
-
-        }
-      );
-
-
-      // ----------------------------------------
-      // Show empty messages
-      // ----------------------------------------
-
-      emptyTableLog.style.display =
-        "block";
-
-
-      emptyJsonLog.style.display =
-        "block";
-
-
-      // ----------------------------------------
-      // Update stats
-      // ----------------------------------------
-
-      updateStats();
+      debugContent.textContent =
+        "Waiting for events...";
 
     }
   );
 
 
   // ============================================================
-  // INITIAL STATE
+  // FINISH TEST
   // ============================================================
 
-  updateStats();
+
+  function showResult(result) {
+
+  // ----------------------------------------------------------
+  // Convert probability to percentage
+  // ----------------------------------------------------------
+
+  const probability =
+    Number(result.probability);
+
+
+  const percentage =
+    (probability * 100).toFixed(2);
+
+
+  // ----------------------------------------------------------
+  // Display probability
+  // ----------------------------------------------------------
+
+  resultProbability.textContent =
+    percentage + "%";
+
+
+  // ----------------------------------------------------------
+  // Display classification
+  // ----------------------------------------------------------
+
+  resultClassification.textContent =
+    result.prediction;
+
+
+  // ----------------------------------------------------------
+  // Display number of events
+  // ----------------------------------------------------------
+
+  resultEventCount.textContent =
+    "Events analyzed: " +
+    result.event_count;
+
+
+  // ----------------------------------------------------------
+  // Hide test
+  // ----------------------------------------------------------
+
+  document.querySelector(
+    ".top-header"
+  ).style.display = "none";
+
+
+  document.querySelector(
+    ".question-nav"
+  ).style.display = "none";
+
+
+  document.querySelector(
+    ".test-container"
+  ).style.display = "none";
+
+
+  document.querySelector(
+    ".debug-panel"
+  ).style.display = "none";
+
+
+  // ----------------------------------------------------------
+  // Show result
+  // ----------------------------------------------------------
+
+  resultScreen.style.display =
+    "flex";
+
+}
+async function finishTest() {
+
+  // ----------------------------------------------------------
+  // Prevent multiple submissions
+  // ----------------------------------------------------------
+
+  finishBtn.disabled = true;
+
+  nextBtn.disabled = true;
+
+  previousBtn.disabled = true;
+
+
+  // ----------------------------------------------------------
+  // Show submitting state
+  // ----------------------------------------------------------
+
+  finishBtn.textContent =
+    "Analyzing...";
+
+
+  console.log(
+    "Sending events to backend:",
+    events
+  );
+
+
+  try {
+
+    // --------------------------------------------------------
+    // Send complete event array to FastAPI
+    // --------------------------------------------------------
+
+    const response = await fetch(
+      "http://localhost:8000/predict",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(events)
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // Check HTTP response
+    // --------------------------------------------------------
+
+    if (!response.ok) {
+
+      const errorData =
+        await response.json();
+
+      throw new Error(
+        errorData.detail ||
+        "Prediction request failed."
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // Read prediction
+    // --------------------------------------------------------
+
+    const result =
+      await response.json();
+
+
+    console.log(
+      "Prediction result:",
+      result
+    );
+
+
+    // --------------------------------------------------------
+    // Display result
+    // --------------------------------------------------------
+
+    showResult(result);
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Prediction error:",
+      error
+    );
+
+
+    alert(
+      "Could not analyze the test.\n\n" +
+      error.message
+    );
+
+
+    // Allow retry
+
+    finishBtn.disabled = false;
+
+    nextBtn.disabled = false;
+
+    previousBtn.disabled = false;
+
+    finishBtn.textContent =
+      "Finish Test";
+
+  }
+
+}
+  finishBtn.addEventListener(
+    "click",
+    finishTest
+  );
+
+  restartBtn.addEventListener(
+  "click",
+  function () {
+
+    window.location.reload();
+
+  }
+);
+
+
+  // ============================================================
+  // TIMER
+  // ============================================================
+
+  let remainingSeconds =
+    30 * 60;
+
+
+  setInterval(
+    function () {
+
+      if (remainingSeconds <= 0) {
+
+        return;
+
+      }
+
+
+      remainingSeconds--;
+
+
+      const minutes =
+        Math.floor(
+          remainingSeconds / 60
+        );
+
+
+      const seconds =
+        remainingSeconds % 60;
+
+
+      document.getElementById(
+        "timer"
+      ).textContent =
+
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(seconds).padStart(2, "0");
+
+    },
+    1000
+  );
+
+
+  // ============================================================
+  // INITIAL RENDER
+  // ============================================================
+
+  renderQuestion();
+
 
 })();
 
 </script>
 
 </body>
+
 </html>

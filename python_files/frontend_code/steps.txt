@@ -1,0 +1,13 @@
+step - 4 
+- python -m pip install -U tensorflowjs
+- tensorflowjs_converter --version
+
+if error occures 
+python -m pip uninstall tensorflowjs -y
+python -m pip install tensorflowjs==4.22.0
+
+    if this is also failed create an env 
+    python3 -m venv tfjs-convert-env
+    source tfjs-convert-env/bin/activate
+    python -m pip install --upgrade pip setuptools wheel packaging
+    python -m pip install tensorflowjs==4.22.0
