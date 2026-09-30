@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Mouse Event Test</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f9fc;
+      color: #18365d;
+    }
+
+    /* =========================
+       TOP NAVIGATION
+       ========================= */
+
+    .top-bar {
+      height: 86px;
+
+      background: white;
+
+      border-top: 6px solid #082c59;
+      border-bottom: 1px solid #dce2ea;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      gap: 10px;
+
+      overflow-x: auto;
+      padding: 0 15px;
+    }
+
+    .question-number {
+      flex-shrink: 0;
+
+      width: 52px;
+      height: 48px;
+
+      border: 1px solid #cfd8e5;
+      border-radius: 5px;
+
+      background: white;
+      color: #526987;
+
+      font-size: 16px;
+
+      cursor: pointer;
+    }
+
+    .question-number:hover {
+      background: #f2f6fb;
+    }
+
+    .question-number.active {
+      background: #e9f0f9;
+
+      border-color: #9db5d2;
+
+      color: #173e6b;
+
+      font-weight: bold;
+    }
+
+    /* =========================
+       MAIN
+       ========================= */
+
+    .main {
+      display: grid;
+
+      grid-template-columns: 43% 57%;
+
+      height: calc(100vh - 86px);
+
+      background: #f7f9fc;
+    }
+
+    /* =========================
+       LEFT PANEL
+       ========================= */
+
+    .question-panel {
+      background: white;
+
+      padding: 38px 40px;
+
+      border-right: 1px solid #d7dee8;
+
+      overflow-y: auto;
+    }
+
+    .question-title {
+      font-size: 17px;
+
+      font-weight: bold;
+
+      margin-bottom: 22px;
+    }
+
+    .answer-type {
+      display: inline-block;
+
+      padding: 7px 12px;
+
+      background: #eef3f8;
+
+      color: #55708f;
+
+      font-size: 12px;
+
+      letter-spacing: 0.5px;
+
+      border-radius: 3px;
+
+      margin-bottom: 28px;
+    }
+
+    .question {
+      font-size: 22px;
+
+      font-weight: bold;
+
+      line-height: 1.4;
+
+      margin-bottom: 32px;
+
+      color: #173a65;
+    }
+
+    .description {
+      font-size: 17px;
+
+      line-height: 1.6;
+
+      color: #5c7392;
+
+      margin-bottom: 32px;
+    }
+
+    .instruction {
+      background: #f3f6fa;
+
+      border-left: 4px solid #3d6da5;
+
+      padding: 22px 16px;
+
+      color: #607796;
+
+      font-size: 15px;
+
+      line-height: 1.5;
+    }
+
+    .tag-info {
+      margin-top: 25px;
+
+      padding: 15px;
+
+      background: #eef4fa;
+
+      border: 1px solid #d2dfec;
+
+      border-radius: 5px;
+
+      font-family: monospace;
+
+      font-size: 14px;
+
+      color: #315779;
+
+      word-break: break-word;
+    }
+
+    .tag-info strong {
+      color: #173e6b;
+    }
+
+    /* =========================
+       RIGHT PANEL
+       ========================= */
+
+    .answer-panel {
+      display: flex;
+
+      flex-direction: column;
+
+      background: #f7f9fc;
+
+      min-width: 0;
+    }
+
+    .answer-header {
+      height: 74px;
+
+      flex-shrink: 0;
+
+      background: white;
+
+      border-bottom: 1px solid #dce2ea;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      padding: 0 36px;
+    }
+
+    .answer-title {
+      font-size: 17px;
+
+      font-weight: bold;
+
+      color: #38577c;
+    }
+
+    .answer-status {
+      color: #7c8fa8;
+
+      font-size: 14px;
+    }
+
+    /* =========================
+       ANSWER AREA
+       ========================= */
+
+    .answer-area {
+      padding: 36px;
+
+      flex: 1;
+
+      overflow: hidden;
+    }
+
+    .answer-box {
+      width: 100%;
+
+      height: 360px;
+
+      background: white;
+
+      border: 1px solid #ccd6e3;
+
+      border-radius: 6px;
+
+      overflow: hidden;
+    }
+
+    /* =========================
+       DIV
+       ========================= */
+
+    .div-answer {
+      width: 100%;
+      height: 100%;
+
+      padding: 25px;
+
+      outline: none;
+
+      font-size: 16px;
+
+      color: #243f61;
+    }
+
+    /* =========================
+       TEXTAREA
+       ========================= */
+
+    .textarea-answer {
+      width: 100%;
+      height: 100%;
+
+      padding: 20px;
+
+      border: none;
+
+      outline: none;
+
+      resize: none;
+
+      font-family: Arial, Helvetica, sans-serif;
+
+      font-size: 16px;
+
+      color: #243f61;
+    }
+
+    /* =========================
+       CANVAS
+       ========================= */
+
+    .canvas-answer {
+      width: 100%;
+      height: 100%;
+
+      display: block;
+
+      cursor: crosshair;
+    }
+
+    /* =========================
+       INPUT
+       ========================= */
+
+    .input-wrapper {
+      padding: 30px;
+    }
+
+    .input-answer {
+      width: 100%;
+
+      padding: 15px;
+
+      border: 1px solid #ccd6e3;
+
+      border-radius: 5px;
+
+      font-size: 16px;
+
+      outline: none;
+    }
+
+    /* =========================
+       SELECT
+       ========================= */
+
+    .select-wrapper {
+      padding: 30px;
+    }
+
+    .select-answer {
+      width: 100%;
+
+      padding: 15px;
+
+      border: 1px solid #ccd6e3;
+
+      border-radius: 5px;
+
+      font-size: 16px;
+
+      background: white;
+    }
+
+    /* =========================
+       NATIVE INPUT TYPES
+       ========================= */
+
+    .native-input-wrapper {
+      padding: 30px;
+    }
+
+    .native-input {
+      width: 100%;
+
+      padding: 15px;
+
+      border: 1px solid #ccd6e3;
+
+      border-radius: 5px;
+
+      font-size: 16px;
+
+      background: white;
+    }
+
+    .file-input {
+      width: 100%;
+
+      padding: 15px;
+
+      border: 1px solid #ccd6e3;
+
+      border-radius: 5px;
+
+      background: white;
+    }
+
+    .color-input {
+      width: 100%;
+
+      height: 55px;
+
+      padding: 5px;
+
+      border: 1px solid #ccd6e3;
+
+      border-radius: 5px;
+
+      background: white;
+
+      cursor: pointer;
+    }
+
+    /* =========================
+       DATALIST
+       ========================= */
+
+    .datalist-wrapper {
+      padding: 30px;
+    }
+
+    .datalist-input {
+      width: 100%;
+
+      padding: 15px;
+
+      border: 1px solid #ccd6e3;
+
+      border-radius: 5px;
+
+      font-size: 16px;
+
+      outline: none;
+    }
+
+    /* =========================
+       IFRAME
+       ========================= */
+
+    .iframe-answer {
+      width: 100%;
+      height: 100%;
+
+      border: none;
+
+      display: block;
+
+      background: white;
+    }
+
+    /* =========================
+       SHADOW DOM
+       ========================= */
+
+    .shadow-host {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* =========================
+       CONTEXT MENU TEST
+       ========================= */
+
+    .context-menu-area {
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      text-align: center;
+
+      padding: 30px;
+
+      color: #607796;
+
+      font-size: 17px;
+
+      cursor: context-menu;
+    }
+
+    /* =========================
+       BOTTOM
+       ========================= */
+
+    .bottom-bar {
+      height: 82px;
+
+      flex-shrink: 0;
+
+      background: white;
+
+      border-top: 1px solid #dce2ea;
+
+      display: flex;
+
+      align-items: center;
+
+      padding: 0 36px;
+    }
+
+    .previous-button {
+      padding: 12px 24px;
+
+      border: 1px solid #c9d4e1;
+
+      border-radius: 5px;
+
+      background: white;
+
+      color: #38577c;
+
+      font-size: 15px;
+
+      cursor: pointer;
+    }
+
+    /* =========================
+       EVENT LOGGER
+       ========================= */
+
+    .event-logger {
+      position: fixed;
+
+      right: 24px;
+
+      bottom: 24px;
+
+      width: 450px;
+
+      height: 280px;
+
+      background: #101d29;
+
+      border-radius: 7px;
+
+      box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.30);
+
+      overflow: hidden;
+
+      z-index: 99999;
+    }
+
+    .logger-header {
+      height: 46px;
+
+      background: #162938;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      padding: 0 16px;
+
+      color: #d8e1ea;
+
+      font-size: 14px;
+
+      font-weight: bold;
+    }
+
+    .clear-button {
+      background: transparent;
+
+      border: none;
+
+      color: #b9c7d4;
+
+      font-size: 14px;
+
+      cursor: pointer;
+    }
+
+    .event-list {
+      height: calc(100% - 46px);
+
+      overflow-y: auto;
+
+      padding: 10px;
+
+      font-family: monospace;
+
+      font-size: 11px;
+
+      color: #d7e1ea;
+    }
+
+    .event {
+      padding: 7px 4px;
+
+      border-bottom: 1px solid #273745;
+
+      word-break: break-all;
+
+      line-height: 1.4;
+    }
+
+    .waiting {
+      color: #aebbc7;
+
+      padding: 5px;
+    }
+
+    .event-count {
+      color: #8ea5ba;
+
+      margin-left: 8px;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+
+  <!-- =====================================================
+       TOP NAVIGATION
+       ===================================================== -->
+
+  <div class="top-bar">
+
+    <button class="question-number active" data-question="1">1</button>
+    <button class="question-number" data-question="2">2</button>
+    <button class="question-number" data-question="3">3</button>
+    <button class="question-number" data-question="4">4</button>
+    <button class="question-number" data-question="5">5</button>
+    <button class="question-number" data-question="6">6</button>
+    <button class="question-number" data-question="7">7</button>
+    <button class="question-number" data-question="8">8</button>
+    <button class="question-number" data-question="9">9</button>
+    <button class="question-number" data-question="10">10</button>
+    <button class="question-number" data-question="11">11</button>
+    <button class="question-number" data-question="12">12</button>
+    <button class="question-number" data-question="13">13</button>
+
+  </div>
+
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+
+  <main class="main">
+
+
+    <!-- ===================================================
+         QUESTION PANEL
+         =================================================== -->
+
+    <section class="question-panel">
+
+      <div
+        id="questionTitle"
+        class="question-title">
+        Question 1
+      </div>
+
+
+      <div class="answer-type">
+        MOUSE EVENT TEST
+      </div>
+
+
+      <div
+        id="questionText"
+        class="question">
+        Test mouse movement inside a DIV.
+      </div>
+
+
+      <div
+        id="questionDescription"
+        class="description">
+        A DIV is part of the normal parent DOM.
+      </div>
+
+
+      <div
+        id="questionInstruction"
+        class="instruction">
+
+        Move your mouse inside the answer region.
+        The event logger belongs to the parent page.
+
+      </div>
+
+
+      <div class="tag-info">
+
+        Answer element:
+
+        <strong id="tagName">
+          &lt;div&gt;
+        </strong>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         ANSWER PANEL
+         =================================================== -->
+
+    <section class="answer-panel">
+
+
+      <div class="answer-header">
+
+        <div class="answer-title">
+          Answer Area
+        </div>
+
+
+        <div
+          id="answerStatus"
+          class="answer-status">
+
+          Testing: &lt;div&gt;
+
+        </div>
+
+      </div>
+
+
+      <div class="answer-area">
+
+        <div
+          id="answerContainer"
+          class="answer-box">
+        </div>
+
+      </div>
+
+
+      <div class="bottom-bar">
+
+        <button
+          id="previousButton"
+          class="previous-button">
+
+          Previous
+
+        </button>
+
+      </div>
+
+
+    </section>
+
+
+  </main>
+
+
+  <!-- =====================================================
+       EVENT LOGGER
+       ===================================================== -->
+
+  <div class="event-logger">
+
+
+    <div class="logger-header">
+
+      <span>
+
+        Parent Mouse Movement Logger
+
+        <span
+          id="eventCount"
+          class="event-count">
+
+          0 events
+
+        </span>
+
+      </span>
+
+
+      <button
+        id="clearEvents"
+        class="clear-button">
+
+        Clear
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="eventList"
+      class="event-list">
+
+      <div class="waiting">
+        Waiting for mouse movement...
+      </div>
+
+    </div>
+
+
+  </div>
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+       ===================================================== -->
+
+  <script>
+
+
+    /*
+     * =====================================================
+     * QUESTIONS
+     * =====================================================
+     */
+
+    const questions = [
+
+
+      {
+        id: 1,
+
+        type: "div",
+
+        tag: "<div>",
+
+        title:
+          "Test mouse movement inside a DIV.",
+
+        description:
+          "A DIV is part of the normal parent DOM. Mouse movement should reach the parent document.",
+
+        instruction:
+          "Move your mouse inside the DIV and verify that the parent logger receives the events."
+      },
+
+
+      {
+        id: 2,
+
+        type: "textarea",
+
+        tag: "<textarea>",
+
+        title:
+          "Test mouse movement inside a TEXTAREA.",
+
+        description:
+          "A textarea is part of the normal parent DOM.",
+
+        instruction:
+          "Move your mouse inside the textarea and verify that the parent logger receives the events."
+      },
+
+
+      {
+        id: 3,
+
+        type: "canvas",
+
+        tag: "<canvas>",
+
+        title:
+          "Test mouse movement inside a CANVAS.",
+
+        description:
+          "Canvas is part of the parent document.",
+
+        instruction:
+          "Move your mouse across the canvas and verify that the parent logger receives the events."
+      },
+
+
+      {
+        id: 4,
+
+        type: "iframe",
+
+        tag: "<iframe>",
+
+        title:
+          "Test mouse movement inside an IFRAME.",
+
+        description:
+          "The iframe has its own document. No connector or postMessage communication is being used.",
+
+        instruction:
+          "Move your mouse outside the iframe and then inside the iframe. Compare the events received by the parent."
+      },
+
+
+      {
+        id: 5,
+
+        type: "input",
+
+        tag: "<input>",
+
+        title:
+          "Test mouse movement inside an INPUT.",
+
+        description:
+          "A normal text input is part of the parent DOM.",
+
+        instruction:
+          "Move your mouse over the input and verify that the parent logger receives the events."
+      },
+
+
+      {
+        id: 6,
+
+        type: "select",
+
+        tag: "<select>",
+
+        title:
+          "Test mouse movement inside a SELECT.",
+
+        description:
+          "The closed select element belongs to the parent DOM, but opening it may display browser-controlled UI.",
+
+        instruction:
+          "First hover over the closed select. Then click it and move the mouse over the opened options. Compare the events."
+      },
+
+
+      {
+        id: 7,
+
+        type: "shadow",
+
+        tag: "Shadow DOM",
+
+        title:
+          "Test mouse movement inside Shadow DOM.",
+
+        description:
+          "The answer is inside a Shadow DOM. It is not a separate browsing context like an iframe.",
+
+        instruction:
+          "Move your mouse inside the Shadow DOM answer area and verify the parent logger."
+      },
+
+
+      {
+        id: 8,
+
+        type: "date",
+
+        tag: '<input type="date">',
+
+        title:
+          "Test mouse movement inside a DATE picker.",
+
+        description:
+          "The input itself is part of the parent DOM. Clicking it may open a browser-controlled calendar UI.",
+
+        instruction:
+          "Hover over the date input first. Then open the calendar and move the mouse inside the calendar popup."
+      },
+
+
+      {
+        id: 9,
+
+        type: "time",
+
+        tag: '<input type="time">',
+
+        title:
+          "Test mouse movement inside a TIME picker.",
+
+        description:
+          "The time input belongs to the parent DOM. The opened picker may be browser-controlled.",
+
+        instruction:
+          "Hover over the time input first. Then open the picker and move the mouse inside it."
+      },
+
+
+      {
+        id: 10,
+
+        type: "color",
+
+        tag: '<input type="color">',
+
+        title:
+          "Test mouse movement inside a COLOR picker.",
+
+        description:
+          "The color input is part of the parent DOM, but the opened color picker can be browser or OS controlled.",
+
+        instruction:
+          "Hover over the color input. Then open the color picker and move the mouse around the picker."
+      },
+
+
+      {
+        id: 11,
+
+        type: "file",
+
+        tag: '<input type="file">',
+
+        title:
+          "Test mouse movement inside a FILE picker.",
+
+        description:
+          "The file input belongs to the page, but clicking it opens a native file-selection dialog.",
+
+        instruction:
+          "Hover over the file input first. Then open the file picker and move the mouse inside the native dialog."
+      },
+
+
+      {
+        id: 12,
+
+        type: "datalist",
+
+        tag: '<input list="...">',
+
+        title:
+          "Test mouse movement inside a DATALIST suggestion popup.",
+
+        description:
+          "The input is part of the parent DOM. Browser autocomplete suggestions may be displayed separately from the normal DOM.",
+
+        instruction:
+          "Click the input, type a value such as 'Ind', then move the mouse over the browser suggestion list."
+      },
+
+
+      {
+        id: 13,
+
+        type: "contextmenu",
+
+        tag: "Browser Context Menu",
+
+        title:
+          "Test mouse movement inside the browser context menu.",
+
+        description:
+          "The context menu is controlled by the browser rather than being part of the webpage DOM.",
+
+        instruction:
+          "Move normally first. Then right-click inside the answer area and move the mouse around the browser context menu."
+      }
+
+
+    ];
+
+
+    /*
+     * =====================================================
+     * DOM REFERENCES
+     * =====================================================
+     */
+
+    const questionTitle =
+      document.getElementById(
+        "questionTitle"
+      );
+
+
+    const questionText =
+      document.getElementById(
+        "questionText"
+      );
+
+
+    const questionDescription =
+      document.getElementById(
+        "questionDescription"
+      );
+
+
+    const questionInstruction =
+      document.getElementById(
+        "questionInstruction"
+      );
+
+
+    const tagName =
+      document.getElementById(
+        "tagName"
+      );
+
+
+    const answerStatus =
+      document.getElementById(
+        "answerStatus"
+      );
+
+
+    const answerContainer =
+      document.getElementById(
+        "answerContainer"
+      );
+
+
+    const eventList =
+      document.getElementById(
+        "eventList"
+      );
+
+
+    const eventCount =
+      document.getElementById(
+        "eventCount"
+      );
+
+
+    /*
+     * =====================================================
+     * MOUSE EVENT DATA
+     * =====================================================
+     */
+
+    const mouseEvents = [];
+
+
+    let previousX = null;
+
+    let previousY = null;
+
+
+    /*
+     * =====================================================
+     * DISTANCE
+     * =====================================================
+     */
+
+    function calculateDistance(
+      x1,
+      y1,
+      x2,
+      y2
+    ) {
+
+      const dx =
+        x2 - x1;
+
+
+      const dy =
+        y2 - y1;
+
+
+      return Math.sqrt(
+        dx * dx +
+        dy * dy
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * PARENT MOUSEMOVE
+     * =====================================================
+     *
+     * This is the ONLY mousemove listener.
+     *
+     * No mouse listener exists inside
+     * the iframe.
+     *
+     * No postMessage is used.
+     */
+
+    function handleMouseMove(
+      event
+    ) {
+
+      const x =
+        event.clientX;
+
+
+      const y =
+        event.clientY;
+
+
+      let distance = 0;
+
+
+      if (
+        previousX !== null &&
+        previousY !== null
+      ) {
+
+        distance =
+          calculateDistance(
+            previousX,
+            previousY,
+            x,
+            y
+          );
+
+      }
+
+
+      const mouseEvent = {
+
+        timestamp:
+          Date.now(),
+
+        type:
+          "mousemove",
+
+        x:
+          x,
+
+        y:
+          y,
+
+        distance:
+          Number(
+            distance.toFixed(2)
+          )
+
+      };
+
+
+      mouseEvents.push(
+        mouseEvent
+      );
+
+
+      previousX =
+        x;
+
+
+      previousY =
+        y;
+
+
+      /*
+       * Remove waiting message.
+       */
+
+      const waiting =
+        eventList.querySelector(
+          ".waiting"
+        );
+
+
+      if (waiting) {
+
+        waiting.remove();
+
+      }
+
+
+      /*
+       * Add event.
+       */
+
+      const eventElement =
+        document.createElement(
+          "div"
+        );
+
+
+      eventElement.className =
+        "event";
+
+
+      eventElement.textContent =
+        JSON.stringify(
+          mouseEvent
+        );
+
+
+      eventList.appendChild(
+        eventElement
+      );
+
+
+      /*
+       * Scroll to latest event.
+       */
+
+      eventList.scrollTop =
+        eventList.scrollHeight;
+
+
+      /*
+       * Update count.
+       */
+
+      eventCount.textContent =
+        mouseEvents.length +
+        " events";
+
+
+      /*
+       * Browser console.
+
+       */
+
+      console.log(
+        "[PARENT MOUSEMOVE]",
+        mouseEvent
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * REGISTER PARENT MOUSEMOVE
+     * =====================================================
+     */
+
+    document.addEventListener(
+      "mousemove",
+      handleMouseMove,
+      true
+    );
+
+
+    /*
+     * =====================================================
+     * CREATE DIV
+     * =====================================================
+     */
+
+    function createDivAnswer() {
+
+      const div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.className =
+        "div-answer";
+
+
+      div.contentEditable =
+        "true";
+
+
+      div.textContent =
+        "Move your mouse here and type your answer...";
+
+
+      answerContainer.appendChild(
+        div
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE TEXTAREA
+     * =====================================================
+     */
+
+    function createTextareaAnswer() {
+
+      const textarea =
+        document.createElement(
+          "textarea"
+        );
+
+
+      textarea.className =
+        "textarea-answer";
+
+
+      textarea.placeholder =
+        "Type your answer here...";
+
+
+      answerContainer.appendChild(
+        textarea
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE CANVAS
+     * =====================================================
+     */
+
+    function createCanvasAnswer() {
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+
+      canvas.className =
+        "canvas-answer";
+
+
+      canvas.width =
+        900;
+
+
+      canvas.height =
+        360;
+
+
+      const ctx =
+        canvas.getContext(
+          "2d"
+        );
+
+
+      ctx.font =
+        "20px Arial";
+
+
+      ctx.fillStyle =
+        "#607796";
+
+
+      ctx.fillText(
+        "Move your mouse over the canvas",
+        30,
+        60
+      );
+
+
+      ctx.font =
+        "15px Arial";
+
+
+      ctx.fillText(
+        "Canvas belongs to the parent document.",
+        30,
+        95
+      );
+
+
+      answerContainer.appendChild(
+        canvas
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE IFRAME
+     * =====================================================
+     *
+     * No mouse listener inside iframe.
+     * No postMessage.
+     */
+
+    function createIframeAnswer() {
+
+      const iframe =
+        document.createElement(
+          "iframe"
+        );
+
+
+      iframe.className =
+        "iframe-answer";
+
+
+      iframe.title =
+        "Iframe Answer";
+
+
+      iframe.src =
+        "about:blank";
+
+
+      answerContainer.appendChild(
+        iframe
+      );
+
+
+      iframe.onload =
+        function() {
+
+          const iframeDocument =
+            iframe.contentDocument;
+
+
+          const body =
+            iframeDocument.body;
+
+
+          body.style.margin =
+            "0";
+
+
+          body.style.padding =
+            "0";
+
+
+          body.style.width =
+            "100%";
+
+
+          body.style.height =
+            "100%";
+
+
+          body.style.background =
+            "white";
+
+
+          const textarea =
+            iframeDocument.createElement(
+              "textarea"
+            );
+
+
+          textarea.placeholder =
+            "Type your answer inside the iframe...";
+
+
+          textarea.style.width =
+            "100%";
+
+
+          textarea.style.height =
+            "100%";
+
+
+          textarea.style.boxSizing =
+            "border-box";
+
+
+          textarea.style.border =
+            "none";
+
+
+          textarea.style.outline =
+            "none";
+
+
+          textarea.style.resize =
+            "none";
+
+
+          textarea.style.padding =
+            "20px";
+
+
+          textarea.style.fontFamily =
+            "Arial";
+
+
+          textarea.style.fontSize =
+            "16px";
+
+
+          body.appendChild(
+            textarea
+          );
+
+        };
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE INPUT
+     * =====================================================
+     */
+
+    function createInputAnswer() {
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.className =
+        "input-wrapper";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.className =
+        "input-answer";
+
+
+      input.type =
+        "text";
+
+
+      input.placeholder =
+        "Type your answer here...";
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      answerContainer.appendChild(
+        wrapper
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE SELECT
+     * =====================================================
+     */
+
+    function createSelectAnswer() {
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.className =
+        "select-wrapper";
+
+
+      const select =
+        document.createElement(
+          "select"
+        );
+
+
+      select.className =
+        "select-answer";
+
+
+      const values = [
+
+        "Select an answer",
+
+        "Option A",
+
+        "Option B",
+
+        "Option C",
+
+        "Option D"
+
+      ];
+
+
+      values.forEach(
+        function(value) {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+
+          option.value =
+            value;
+
+
+          option.textContent =
+            value;
+
+
+          select.appendChild(
+            option
+          );
+
+        }
+      );
+
+
+      wrapper.appendChild(
+        select
+      );
+
+
+      answerContainer.appendChild(
+        wrapper
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE SHADOW DOM
+     * =====================================================
+     */
+
+    function createShadowAnswer() {
+
+      const host =
+        document.createElement(
+          "div"
+        );
+
+
+      host.className =
+        "shadow-host";
+
+
+      answerContainer.appendChild(
+        host
+      );
+
+
+      const shadow =
+        host.attachShadow(
+          {
+            mode: "open"
+          }
+        );
+
+
+      const textarea =
+        document.createElement(
+          "textarea"
+        );
+
+
+      textarea.placeholder =
+        "Type your answer inside Shadow DOM...";
+
+
+      textarea.style.width =
+        "100%";
+
+
+      textarea.style.height =
+        "100%";
+
+
+      textarea.style.boxSizing =
+        "border-box";
+
+
+      textarea.style.border =
+        "none";
+
+
+      textarea.style.outline =
+        "none";
+
+
+      textarea.style.resize =
+        "none";
+
+
+      textarea.style.padding =
+        "20px";
+
+
+      textarea.style.fontFamily =
+        "Arial";
+
+
+      textarea.style.fontSize =
+        "16px";
+
+
+      shadow.appendChild(
+        textarea
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE DATE INPUT
+     * =====================================================
+     */
+
+    function createDateAnswer() {
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.className =
+        "native-input-wrapper";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.className =
+        "native-input";
+
+
+      input.type =
+        "date";
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      answerContainer.appendChild(
+        wrapper
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE TIME INPUT
+     * =====================================================
+     */
+
+    function createTimeAnswer() {
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.className =
+        "native-input-wrapper";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.className =
+        "native-input";
+
+
+      input.type =
+        "time";
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      answerContainer.appendChild(
+        wrapper
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE COLOR INPUT
+     * =====================================================
+     */
+
+    function createColorAnswer() {
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.className =
+        "native-input-wrapper";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.className =
+        "color-input";
+
+
+      input.type =
+        "color";
+
+
+      input.value =
+        "#3d6da5";
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      answerContainer.appendChild(
+        wrapper
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE FILE INPUT
+     * =====================================================
+     */
+
+    function createFileAnswer() {
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.className =
+        "native-input-wrapper";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.className =
+        "file-input";
+
+
+      input.type =
+        "file";
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      answerContainer.appendChild(
+        wrapper
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE DATALIST
+     * =====================================================
+     */
+
+    function createDatalistAnswer() {
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.className =
+        "datalist-wrapper";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.className =
+        "datalist-input";
+
+
+      input.type =
+        "text";
+
+
+      input.setAttribute(
+        "list",
+        "countrySuggestions"
+      );
+
+
+      input.placeholder =
+        "Type Ind, Uni, etc...";
+
+
+      const datalist =
+        document.createElement(
+          "datalist"
+        );
+
+
+      datalist.id =
+        "countrySuggestions";
+
+
+      const values = [
+
+        "India",
+
+        "Indonesia",
+
+        "United States",
+
+        "United Kingdom",
+
+        "United Arab Emirates",
+
+        "Australia",
+
+        "Canada"
+
+      ];
+
+
+      values.forEach(
+        function(value) {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+
+          option.value =
+            value;
+
+
+          datalist.appendChild(
+            option
+          );
+
+        }
+      );
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      wrapper.appendChild(
+        datalist
+      );
+
+
+      answerContainer.appendChild(
+        wrapper
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE CONTEXT MENU TEST
+     * =====================================================
+     */
+
+    function createContextMenuAnswer() {
+
+      const area =
+        document.createElement(
+          "div"
+        );
+
+
+      area.className =
+        "context-menu-area";
+
+
+      area.textContent =
+        "Right-click here to open the browser context menu, then move the mouse inside the menu.";
+
+
+      answerContainer.appendChild(
+        area
+      );
+
+    }
+
+
+    /*
+     * =====================================================
+     * CREATE ANSWER
+     * =====================================================
+     */
+
+    function createAnswer(
+      question
+    ) {
+
+      answerContainer.innerHTML =
+        "";
+
+
+      if (
+        question.type ===
+        "div"
+      ) {
+
+        createDivAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "textarea"
+      ) {
+
+        createTextareaAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "canvas"
+      ) {
+
+        createCanvasAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "iframe"
+      ) {
+
+        createIframeAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "input"
+      ) {
+
+        createInputAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "select"
+      ) {
+
+        createSelectAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "shadow"
+      ) {
+
+        createShadowAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "date"
+      ) {
+
+        createDateAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "time"
+      ) {
+
+        createTimeAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "color"
+      ) {
+
+        createColorAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "file"
+      ) {
+
+        createFileAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "datalist"
+      ) {
+
+        createDatalistAnswer();
+
+        return;
+
+      }
+
+
+      if (
+        question.type ===
+        "contextmenu"
+      ) {
+
+        createContextMenuAnswer();
+
+        return;
+
+      }
+
+    }
+
+
+    /*
+     * =====================================================
+     * LOAD QUESTION
+     * =====================================================
+     */
+
+    function loadQuestion(
+      questionNumber
+    ) {
+
+      const question =
+        questions[
+          questionNumber - 1
+        ];
+
+
+      if (!question) {
+
+        return;
+
+      }
+
+
+      questionTitle.textContent =
+        "Question " +
+        question.id;
+
+
+      questionText.textContent =
+        question.title;
+
+
+      questionDescription.textContent =
+        question.description;
+
+
+      questionInstruction.textContent =
+        question.instruction;
+
+
+      tagName.textContent =
+        question.tag;
+
+
+      answerStatus.textContent =
+        "Testing: " +
+        question.tag;
+
+
+      createAnswer(
+        question
+      );
+
+
+      /*
+       * Reset mouse distance.
+       */
+
+      previousX =
+        null;
+
+
+      previousY =
+        null;
+
+
+      /*
+       * Update active button.
+       */
+
+      document
+        .querySelectorAll(
+          ".question-number"
+        )
+        .forEach(
+          function(button) {
+
+            button.classList.remove(
+              "active"
+            );
+
+          }
+        );
+
+
+      const activeButton =
+        document.querySelector(
+          '[data-question="' +
+          questionNumber +
+          '"]'
+        );
+
+
+      if (activeButton) {
+
+        activeButton.classList.add(
+          "active"
+        );
+
+      }
+
+    }
+
+
+    /*
+     * =====================================================
+     * QUESTION NAVIGATION
+     * =====================================================
+     */
+
+    document
+      .querySelectorAll(
+        ".question-number"
+      )
+      .forEach(
+        function(button) {
+
+          button.addEventListener(
+            "click",
+            function() {
+
+              const questionNumber =
+                Number(
+                  button.dataset.question
+                );
+
+
+              loadQuestion(
+                questionNumber
+              );
+
+            }
+          );
+
+        }
+      );
+
+
+    /*
+     * =====================================================
+     * PREVIOUS
+     * =====================================================
+     */
+
+    document
+      .getElementById(
+        "previousButton"
+      )
+      .addEventListener(
+        "click",
+        function() {
+
+          const active =
+            document.querySelector(
+              ".question-number.active"
+            );
+
+
+          if (!active) {
+
+            return;
+
+          }
+
+
+          const current =
+            Number(
+              active.dataset.question
+            );
+
+
+          if (
+            current > 1
+          ) {
+
+            loadQuestion(
+              current - 1
+            );
+
+          }
+
+        }
+      );
+
+
+    /*
+     * =====================================================
+     * CLEAR EVENTS
+     * =====================================================
+     */
+
+    document
+      .getElementById(
+        "clearEvents"
+      )
+      .addEventListener(
+        "click",
+        function() {
+
+          mouseEvents.length =
+            0;
+
+
+          previousX =
+            null;
+
+
+          previousY =
+            null;
+
+
+          eventList.innerHTML =
+            "";
+
+
+          const waiting =
+            document.createElement(
+              "div"
+            );
+
+
+          waiting.className =
+            "waiting";
+
+
+          waiting.textContent =
+            "Waiting for mouse movement...";
+
+
+          eventList.appendChild(
+            waiting
+          );
+
+
+          eventCount.textContent =
+            "0 events";
+
+        }
+      );
+
+
+    /*
+     * =====================================================
+     * START
+     * =====================================================
+     */
+
+    loadQuestion(1);
+
+
+    console.log(
+      "Mouse movement test application loaded successfully."
+    );
+
+  </script>
+
+</body>
+
+</html>
